@@ -1,0 +1,10 @@
+ENV	:default
+Introduce	:Not at the moment
+CONFIG	:{'dataset_name': 'Mnist', 'model_name': 'LeNet', 'criterion_name': 'CrossEntropyLoss', 'attack_name': 'FGSM'}
+Mnist	:{'dirname': '/home/baiding/Desktop/Study/Deep/datasets/MNIST/raw', 'needVector': False}
+LeNet	:{'filepath': '/home/baiding/Desktop/Study/Deep/pretrained/lenet/lenet_1.pkl'}
+FGSM	:{'eps': 0.5, 'isTarget': False, 'target': [0]}
+acc	:0.0034999999999999476
+
+
+
