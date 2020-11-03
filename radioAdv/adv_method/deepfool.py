@@ -64,7 +64,7 @@ class DeepFool(BaseMethod):
             # 选择一张图片来进行查找（DeepFool目前只能一张一张的送入）
             image = x[b:b+1, :, :, :]
             x_adv = image
-            
+
             # 得到原始的预测结果
             predict_origin = self.model(x_adv).cpu().detach().numpy()
             # 所有的类别数目

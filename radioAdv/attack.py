@@ -29,7 +29,7 @@ test_loader = DataLoader(test_set, batch_size = 32, shuffle = False, num_workers
 ######################################加载模型
 model_name = config.CONFIG['model_name']
 model = getattr(model_loader, 'load' + model_name)(**getattr(config, model_name))
-
+model.eval()
 ######################################加载损失函数
 criterion_name = config.CONFIG['criterion_name']
 criterion = getattr(nn, criterion_name)()

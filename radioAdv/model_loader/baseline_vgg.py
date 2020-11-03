@@ -53,7 +53,7 @@ class Baseline_VGG(BaseModel):
         )
     
     def forward(self, x):
-        x = torch.squeeze(x)
+        x = x.view(-1,2,128)
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)

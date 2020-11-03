@@ -17,7 +17,7 @@ class Config(object):
             dataset_name = 'Rml2016_10a',     #所选择的数据集的名称
             model_name = 'Baseline_VGG',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
-            attack_name = 'FGSM',       #设定攻击方法的名称
+            attack_name = 'DeepFool',       #设定攻击方法的名称
         )
 
 
@@ -30,7 +30,7 @@ class Config(object):
 
         self.Baseline_VGG = dict(
             output_dim = 11,
-            filepath = '/home/baiding/Desktop/Study/lab/radio/radioClassifyFrame/checkpoint/Rml2016_10a_Baseline_VGG_V2/Baseline_VGG_Epoch99.pkl',     #加载模型的位置，与上面模型要对应
+            filepath = '/home/baiding/Desktop/Study/lab/radio/Frame/radioClassifyFrame/checkpoint/Rml2016_10a_Baseline_VGG_V2/Baseline_VGG_Epoch99.pkl',     #加载模型的位置，与上面模型要对应
         )
 
 
@@ -68,7 +68,7 @@ class Config(object):
         )
         ##########################DeepFool方法
         self.DeepFool = dict(
-            max_iter = 50,              #最大寻找次数
+            max_iter = 10,              #最大寻找次数
         )
 
         #################################################log
