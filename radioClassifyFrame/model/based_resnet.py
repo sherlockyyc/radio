@@ -41,17 +41,18 @@ class Res_Stack(nn.Module):
         return x
 
 
-class Baseline_ResNet(BaseModel):
+class Based_ResNet(BaseModel):
     def __init__(self, output_dim):
-        super(Baseline_ResNet, self).__init__()
-        # after res_stack1 (batch, 32, 64)
+        super(Based_ResNet, self).__init__()
+        # input (batch, 2, 128)
         self.res_stack1 = Res_Stack(input_dim= 2, output_dim= 32)
-        # after res_stack1 (batch, 32, 32)
+        # after res_stack1 (batch, 32, 64)
         self.res_stack2 = Res_Stack(input_dim= 32, output_dim= 32)
-        # after res_stack1 (batch, 32, 16)
+        # after res_stack2 (batch, 32, 32)
         self.res_stack3 = Res_Stack(input_dim= 32, output_dim= 32)
-        # after res_stack1 (batch, 32, 8)
+        # after res_stack3 (batch, 32, 16)
         self.res_stack4 = Res_Stack(input_dim= 32, output_dim= 32)
+        # after res_stack4 (batch, 32, 8)
         
         self.fc1 = nn.Sequential(
             nn.Linear(32*8, 128),

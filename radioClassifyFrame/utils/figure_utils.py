@@ -25,7 +25,7 @@ def plot_confusion_matrix(cm, dirname, labels, title='Confusion matrix', cmap=pl
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     now_time = datetime.datetime.now()
-    now_time = now_time.strftime("%m-%d-%H:%M")
+    now_time = now_time.strftime("%m-%d_%H-%M")
     plt.savefig(os.path.join(dirname,title+now_time+'.jpg'))
 
 

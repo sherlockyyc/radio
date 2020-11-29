@@ -57,7 +57,6 @@ class BaseTrainer(object):
         self.checkpoint_dir = self.config.Checkpoint['checkpoint_dir']
         self.checkpoint_filename = os.path.join(self.checkpoint_dir, self.config.Checkpoint['checkpoint_file_format'])
         self.model_best_file = os.path.join(self.checkpoint_dir, self.config.Checkpoint['model_best'])
-        self.log_filename = os.path.join(self.checkpoint_dir, self.config.Checkpoint['log_file'])
         self.save_period = self.config.Checkpoint['save_period']
         
 
@@ -66,6 +65,7 @@ class BaseTrainer(object):
         
         #------------------------------------训练配置
         self.EPOCH = self.config.ARG['epoch']
+        self.BASE_EPOCH = self.config.LoadModel['base_epoch']
         self.len_epoch = len(self.data_loader)
 
     
@@ -80,6 +80,7 @@ class BaseTrainer(object):
     def train(self):
         """[完整的训练逻辑]
         """
+        self.log_filename = os.path.join(self.checkpoint_dir, 'Train_'+self.config.Checkpoint['log_file'])
         Log = self.config.log_output()
         log_file = self.file_open(self.checkpoint_dir,self.log_filename)
         log = {'config':Log}
@@ -113,6 +114,7 @@ class BaseTrainer(object):
     def test(self):
         """[完整的测试逻辑]
         """
+        self.log_filename = os.path.join(self.checkpoint_dir, 'Test_'+self.config.Checkpoint['log_file'])
         Log = self.config.log_output()
         log_file = self.file_open(self.checkpoint_dir,self.log_filename)
         log = {'config':Log}
@@ -128,6 +130,7 @@ class BaseTrainer(object):
         for key, value in log.items():
             print('    {:15s}: {}'.format(str(key), value))
         self.file_write(log_file,log)
+        print("Saving log: {} ...".format(self.log_filename))
 
 
     def _test_epoch(self):
@@ -172,6 +175,7 @@ class BaseTrainer(object):
         Args:
             epoch ([int]): [目前的epoch number]
         """
+        epoch = epoch + self.BASE_EPOCH
         arch = type(self.model).__name__
         state = {
             'arch': arch,

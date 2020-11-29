@@ -6,29 +6,29 @@ from model.base_model import BaseModel
 
 
 class VTCNN2(BaseModel):
-    def __init__(self):
+    def __init__(self, output_dim):
         super(VTCNN2, self).__init__()
         self.conv1 = nn.Sequential(
             nn.BatchNorm2d(1),
             nn.ZeroPad2d(padding = (2, 2)),
             nn.Conv2d(in_channels = 1, out_channels = 256, kernel_size = (1, 3)),
             nn.ReLU(),
-            nn.Dropout(0.5)
+            nn.Dropout(0.6)
         )
         self.conv2 = nn.Sequential(
             nn.BatchNorm2d(256),
             nn.ZeroPad2d(padding = (2, 2)),
             nn.Conv2d(in_channels = 256, out_channels = 80, kernel_size=(2, 3)),
             nn.ReLU(),
-            nn.Dropout(0.5)
+            nn.Dropout(0.6)
         )
         self.fc1 = nn.Sequential(
             nn.Linear(10560, 256),
             nn.ReLU(),
-            nn.Dropout(0.5)
+            nn.Dropout(0.6)
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(256, 11)
+            nn.Linear(256, output_dim)
         )
     
     def forward(self, x):

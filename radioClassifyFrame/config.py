@@ -11,13 +11,13 @@ class Config(object):
         #------------------------------------------------GPU配置
         self.GPU = dict(
             use_gpu = True,             # 是否使用GPU，True表示使用
-            device_id = [0],            # 所使用的GPU设备号，type=list
+            device_id = [1],            # 所使用的GPU设备号，type=list
         )
 
 
         self.CONFIG = dict(
             dataset_name = 'Rml2016_10a',     # 所选择的数据集的名称
-            model_name = 'Baseline_LSTM',       # 攻击模型的名称
+            model_name = 'CLDNN',       # 攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       # 失函数的名称
             optimizer_name = 'Adam',     # 优化器的名称（torch.nn中）
             metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
@@ -27,8 +27,8 @@ class Config(object):
 
         #------------------------------------------------训练参数设置
         self.ARG = dict(
-            epoch = 100,         # 训练epoch
-            batch_size = 256,    # 训练集batch_size
+            epoch = 1200,         # 训练epoch
+            batch_size = 128,    # 训练集batch_size
         )
 
         #------------------------------------------------损失函数选择
@@ -37,48 +37,56 @@ class Config(object):
         
         #------------------------------------------------网络模型
         self.VTCNN2 = dict(
-
+            output_dim = 11,
         )
         self.Baseline_LSTM = dict(
             output_dim = 11,
         )
-        self.Baseline_VGG = dict(
+        self.Based_VGG = dict(
             output_dim = 11,
         )
-        self.Baseline_ResNet = dict(
+        self.Based_ResNet = dict(
             output_dim = 11,
         )
-        self.Baseline_CNN = dict(
+        self.Based_GRU = dict(
+            output_dim = 11,
+        )
+        self.Based_Transformer_Baseline = dict(
+            output_dim = 11,
+        )
+        self.CLDNN = dict(
             output_dim = 11,
         )
 
         #------------------------------------------------优化器
         self.Adam = dict(
-            lr = 0.01,                  # 学习率
-            weight_decay = 5e-4,        # 权重衰减
+            lr = 0.0001,                  # 学习率
+            weight_decay = 5e-3,        # 权重衰减
         )
 
 
         #------------------------------------------------数据集
         #--------------------------------数据集参数
         self.Rml2016_10a = dict(
-            dirname = "/home/baiding/Desktop/Study/lab/radio/RML2016.10a",  # 数据集文件路径
-            prop = 0.5,                     # 所占的比例
+            dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
+            prop = 0.8,                     # 所占的比例
         )
 
         
         #------------------------------------------------学习率变化
         self.LrAdjust = dict(
-            lr_step = 7,                   # 学习率变化的间隔
+            lr_step = 20,                   # 学习率变化的间隔
             lr_decay = 0.5,                 # 学习率变化的幅度
-            increase_bottom = 3,            # 退火前学习率增加的上界
+            increase_bottom = 10,            # 退火前学习率增加的上界
             increase_amp = 1.1,             # 学习率增加的幅度
+            warm_lr = 0.0001,               # 当学习率小于1e-8时，恢复学习率为warm_lr
         )
 
 
         #------------------------------------------------模型加载
         self.LoadModel = dict(
-            filename = './checkpoint/Rml2016_10a_Baseline_LSTM_V1/Baseline_LSTM_Epoch98.pkl',     #加载模型的位置，与上面模型要对应
+            filename = './checkpoint/Rml2016_10a_CLDNN_V1/CLDNN_Epoch1195.pkl',     #加载模型的位置，与上面模型要对应
+            base_epoch = 0,           # 预训练的基础epoch
         )
 
 
@@ -89,10 +97,10 @@ class Config(object):
                 self.VERSION),                          # checkpoint 所在的文件夹
             checkpoint_file_format = self.CONFIG['model_name']+'_Epoch{}.pkl',     #模型文件名称格式，分别表示模型名称、Epoch
             model_best = 'model_best.ptk',            #最好的模型名称，暂时未用到
-            log_file = 'log_{}_{}.log'.format(
-                time.strftime("%m-%d %H:%M"),self.Introduce
+            log_file = '{}_{}.log'.format(
+                self.CONFIG['model_name'], time.strftime("%m-%d_%H-%M")
             ),                         #log文件名称
-            save_period = 1,                            #模型的存储间隔
+            save_period = 5,                            #模型的存储间隔
         )
 
 
@@ -108,4 +116,5 @@ class Config(object):
                 log[name] = value
         for name,value in self.ARG.items():
             log[name] = value
+        log['LoadModel'] = self.LoadModel
         return log

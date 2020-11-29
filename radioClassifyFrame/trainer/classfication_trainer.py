@@ -108,8 +108,9 @@ class ClassficationTrainer(BaseTrainer):
             snrs ([一维array]): [不同的SNR的名称]
         """
         # Plot accuracy curve
+        plt.switch_backend('agg')
         now_time = datetime.datetime.now()
-        now_time = now_time.strftime("%m-%d-%H:%M")
+        now_time = now_time.strftime("%m-%d_%H-%M")
 
         util.ensure_dir(dirname)
         plt.plot(snrs, snr_acc)
@@ -128,6 +129,7 @@ class ClassficationTrainer(BaseTrainer):
             targets ([一维array 或 二维array（onehot）]): [对应的真实标签]
             mods ([一维array]): 真实类别，str
         """
+        plt.switch_backend('agg')
         cm = util.generate_confusion_matrix(predict, targets, mods)
         util.ensure_dir(dirname)
         util.plot_confusion_matrix(cm, dirname, mods)
