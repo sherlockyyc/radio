@@ -1,0 +1,61 @@
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from model_loader.base_model import BaseModel
+
+class Based_GRU(BaseModel):
+    def __init__(self, output_dim):
+        super(Based_GRU, self).__init__()
+        # input(batch, 1, 2, 128)
+        # after shape(batch, 128, 2)
+        self.gru1 = nn.Sequential(
+            nn.BatchNorm1d(128),
+            nn.GRU(input_size= 2, hidden_size= 100, num_layers=3, batch_first= True)
+        )
+        self.relu1 = nn.ReLU()
+        # after gru1(batch, 128, 100)
+        self.gru2 = nn.Sequential(
+            nn.BatchNorm1d(128),
+            nn.GRU(input_size= 100, hidden_size= 100, num_layers=3, batch_first= True)
+        )
+        self.relu2 = nn.ReLU()
+        # afer gru2(batch, 128, 100)
+        # 取最后一个单元的输出(batch, 1, 100)
+        # after shape(batch, 100)
+        self.fc1 = nn.Sequential(
+            nn.Linear(in_features= 100, out_features= 64),
+            nn.ReLU()
+        )
+        self.fc2 = nn.Sequential(
+            nn.Linear(in_features= 64, out_features= output_dim)
+        )
+
+    def forward(self, x):
+        x = x.view(x.shape[0], 2, 128)
+        x = x.transpose(1,2)
+        x,_ = self.gru1(x)
+        x = self.relu1(x)
+        # print('conv1', x.shape)
+        x,_ = self.gru2(x)
+        x = self.relu2(x)[:,-1,:]
+        # print('gru2', x.shape)
+        x = x.view(x.shape[0], -1)
+        # x = self.dropout(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x
+
+def loadBased_GRU(filepath):
+    """[加载LeNet网络模型]
+
+    Args:
+        filepath ([str]): [LeNet的预训练模型所在的位置]
+
+    Returns:
+        [type]: [返回一个预训练的LeNet]
+    """
+    checkpoint = torch.load(filepath,map_location='cpu')
+    model = Based_GRU(output_dim = 11)
+    model.load_state_dict(checkpoint['state_dict'])  # 加载网络权重参数
+    return model

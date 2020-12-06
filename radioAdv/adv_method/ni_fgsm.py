@@ -35,6 +35,7 @@ class NI_FGSM(BaseMethod):
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
+        self.model.train()
         if is_target:
             x_adv,pertubation = self._attackWithTarget(x, target, epoch, eps, mu)
             message = "At present, we haven't implemented the Target attack algorithm "
@@ -43,7 +44,7 @@ class NI_FGSM(BaseMethod):
             x_adv,pertubation = self._attackWithNoTarget(x, y, epoch, eps, mu)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
-
+        self.model.eval()
         logits = self.model(x_adv).cpu().detach().numpy()
         pred = logits.argmax(1)
 

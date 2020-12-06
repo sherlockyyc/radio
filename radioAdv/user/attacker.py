@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 
 import torch
 
-import utils as util
+import model_loader
 from config import *
+import utils as util
+
+
 
 class Attacker(object):
     """[攻击者]
@@ -30,19 +33,26 @@ class Attacker(object):
         self.attack_method = attack_method
         self.snrs = snrs
         self.mods = mods
+
+
         #########################GPU配置
         self.use_gpu = False
-        self.device_ids = self.config.GPU['device_id']
-        if self.device_ids:
+        self.device_ids = [0]
+        self.device = torch.device('cpu')
+        if self.config.GPU['use_gpu']:
             if not torch.cuda.is_available():
                 print("There's no GPU is available , Now Automatically converted to CPU device")
             else:
                 message = "There's no GPU is available"
+                self.device_ids = self.config.GPU['device_id']
                 assert len(self.device_ids) > 0,message
-                self.model = self.model.cuda(self.device_ids[0])
+                self.device = torch.device('cuda', self.device_ids[0])
+                self.model = self.model.to(self.device)
                 if len(self.device_ids) > 1:
                     self.model = nn.DataParallel(model, device_ids=self.device_ids)
                 self.use_gpu = True
+
+
         #########################攻击信息
         self.attack_name = self.config.CONFIG['attack_name']
         #########################攻击方式---目标攻击设置
@@ -55,6 +65,7 @@ class Attacker(object):
         # 各种路径配置
         #------------------------------------figure配置
         self.figure_dir = os.path.join('figure', self.config.CONFIG['model_name'] )
+
 
 
     def attack_batch(self, x, y):
@@ -71,13 +82,13 @@ class Attacker(object):
         """ 
         
         #放到GPU设备中
-        if type(x) is np.ndarray:
-            x = torch.from_numpy(x)
-        if type(y) is not torch.tensor:
-            y = torch.Tensor(y.float())
-        if self.use_gpu:
-            x = x.cuda(self.device_ids[0]).float()
-            y = y.cuda(self.device_ids[0]).long()
+        # if type(x) is np.ndarray:
+        #     x = torch.from_numpy(x)
+        # if type(y) is not torch.tensor:
+        #     y = torch.Tensor(y.float())
+        x = torch.Tensor(x.float()).to(self.device)
+        y = torch.Tensor(y.float()).to(self.device).long()
+
 
         x_advs, pertubations, logits, nowLabels = self.attack_method.attack(
             x, y, **getattr(self.config, self.config.CONFIG['attack_name']))
@@ -99,8 +110,8 @@ class Attacker(object):
         """
         x = np.expand_dims(x, axis=0)                    #拓展成四维
         y = np.array(list([y]))                         #转成矩阵
-        x_adv, pertubation, logits, nowLabel = self.attack_batch(x, y)
-        return x_adv[0], pertubation[0], logits[0], nowLabel[0]
+        x_adv,pertubation,nowLabel = self.attack_batch(x, y)
+        return x[0], x_adv[0], pertubation[0] ,nowLabel[0]
 
 
     def attack_set(self, data_loader):
@@ -181,8 +192,67 @@ class Attacker(object):
         log['pertub_max'] = pertub_max
         log['snr_acc'] = snr_acc
         return log
-  
 
+    def start_attack(self, data_loader):
+        attack_method = self.config.Switch_Method['method']
+        log = {}
+        if attack_method == 'White_Attack':
+            log = self.white_attack(data_loader)
+        elif attack_method == 'Black_Attack':
+            threat_model = self.config.Black_Attack['threat_model']
+            black_model = self.config.Black_Attack['black_model']
+            log = self.black_attack(data_loader, threat_model, black_model)
+        return log
+
+    def white_attack(self, data_loader):
+        log = self.attack_set(data_loader)
+        return log
+
+
+    def black_attack(self, data_loader, threat_model, black_model):
+        """[对一个模型进行黑盒攻击]
+
+        Args:
+            data_loader ([DataLoader]): [数据加载器]
+            threat_model ([Model]): [用于生成对抗样本的白盒模型]
+            black_model ([Model]): [用于攻击的黑盒模型]
+
+        Returns:
+            acc [float]: [攻击后的准确率]
+            mean [float]: 平均扰动大小
+        """
+        model_name = self.config.Black_Attack['threat_model']
+        self.model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+        x_adv_list = []
+        y_list = []
+        pertubmean = []
+        for idx,(x,y) in enumerate(tqdm(data_loader)):
+            x_advs ,pertubations, logits, nowLabels = self.attack_batch(x, y)
+            x_adv_list.append(x_advs)
+            y_list.append(y)
+            pertubmean.append(pertubations.mean())
+        mean = np.mean(pertubmean)
+        torch.cuda.empty_cache()
+
+        model_name = self.config.Black_Attack['black_model']
+        self.model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+        data_num = 0
+        success_num = 0
+        for idx,(x_adv, y) in enumerate(tqdm(zip(x_adv_list, y_list))):
+            x_adv = torch.tensor(x_adv).to(self.device).float()
+
+            logits = self.model(x_adv).detach().cpu().numpy()
+            pred = logits.argmax(1)
+            data_num +=  x.shape[0]
+            success_num += (y.numpy() != pred).sum()
+        acc = 1 - success_num / data_num
+
+        log = {}
+        log['acc'] = acc
+        log['mean'] = mean
+        return log
+
+    
     def plot_snr_figure(self, dirname, snr_acc, snrs):
         """[基于不同SNR下的分类准确率绘制图像]
 

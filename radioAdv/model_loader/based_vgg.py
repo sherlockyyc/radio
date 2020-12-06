@@ -5,9 +5,9 @@ import torch.nn.functional as F
 from model_loader.base_model import BaseModel
 
 
-class Baseline_VGG(BaseModel):
+class Based_VGG(BaseModel):
     def __init__(self, output_dim):
-        super(Baseline_VGG, self).__init__()
+        super(Based_VGG, self).__init__()
 
         # input(batch, 2, 128)
         self.conv1 = nn.Sequential(
@@ -40,13 +40,11 @@ class Baseline_VGG(BaseModel):
         # after conv4(batch, 64, 8)
         self.fc1 = nn.Sequential(
             nn.Linear(64 * 8, 128),
-            nn.SELU(),
-            # nn.Dropout(0.5),
+            nn.ReLU(),
         )
         self.fc2 = nn.Sequential(
             nn.Linear(128, 64),
-            nn.SELU(),
-            # nn.Dropout(0.5),
+            nn.ReLU(),
         )
         self.fc3 = nn.Sequential(
             nn.Linear(64, output_dim)
@@ -64,7 +62,7 @@ class Baseline_VGG(BaseModel):
         x = self.fc3(x)
         return x
 
-def loadBaseline_VGG(filepath, output_dim):
+def loadVGG(filepath):
     """[加载LeNet网络模型]
 
     Args:
@@ -74,6 +72,7 @@ def loadBaseline_VGG(filepath, output_dim):
         [type]: [返回一个预训练的LeNet]
     """
     checkpoint = torch.load(filepath)
-    model = Baseline_VGG(output_dim)
+    model = VGG(output_dim = 11)
     model.load_state_dict(checkpoint['state_dict'])  # 加载网络权重参数
     return model
+    

@@ -51,9 +51,10 @@ attacker = Attacker(model, criterion, config, attack_method, snrs, mods)
 # print(y,nowLabel)
 
 ###############################攻击整个数据集
-attack_log = attacker.attack_set(test_loader)
-Log['attack_log'] = attack_log
-
+# attack_log = attacker.attack_set(test_loader)
+# Log['attack_log'] = attack_log
+log = attacker.start_attack(test_loader)
+Log.update(log)
 
 ####################################log保存
 filename = os.path.join(config.Checkpoint['log_dir'], config.Checkpoint['log_filename'])
