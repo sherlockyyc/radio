@@ -36,18 +36,15 @@ class Based_VGG(BaseModel):
             nn.Conv1d(in_channels = 64, out_channels= 64, kernel_size= 3, stride= 1, padding= 1),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
-            nn.Dropout(0.5),
         )
         # after conv4(batch, 64, 8)
         self.fc1 = nn.Sequential(
             nn.Linear(64 * 8, 128),
             nn.ReLU(),
-            nn.Dropout(0.5),
         )
         self.fc2 = nn.Sequential(
             nn.Linear(128, 64),
             nn.ReLU(),
-            nn.Dropout(0.5),
         )
         self.fc3 = nn.Sequential(
             nn.Linear(64, output_dim)

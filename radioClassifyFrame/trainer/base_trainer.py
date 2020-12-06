@@ -41,6 +41,7 @@ class BaseTrainer(object):
         #------------------------------------GPU配置
         self.use_gpu = False
         self.device_ids = [0]
+        self.device = torch.device('cpu')
         if self.config.GPU['use_gpu']:
             if not torch.cuda.is_available():
                 print("There's no GPU is available , Now Automatically converted to CPU device")
@@ -48,10 +49,12 @@ class BaseTrainer(object):
                 message = "There's no GPU is available"
                 self.device_ids = self.config.GPU['device_id']
                 assert len(self.device_ids) > 0,message
-                self.model = self.model.cuda(self.device_ids[0])
+                self.device = torch.device('cuda', self.device_ids[0])
+                self.model = self.model.to(self.device)
                 if len(self.device_ids) > 1:
                     self.model = nn.DataParallel(model, device_ids=self.device_ids)
                 self.use_gpu = True
+                
 
         #------------------------------------checkpoint配置
         self.checkpoint_dir = self.config.Checkpoint['checkpoint_dir']

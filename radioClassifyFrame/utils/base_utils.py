@@ -50,7 +50,7 @@ def adjust_learning_rate(optimizer, epoch, lr_step, lr_decay, increase_bottom=0,
     LR = nowLR
     if epoch < increase_bottom:
         LR = LR * increase_amp
-    elif LR < 5e-8:
+    elif LR < 1e-8:
         if warm_lr == 0:
             return optimizer
         else:
