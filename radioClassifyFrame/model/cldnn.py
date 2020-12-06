@@ -38,12 +38,12 @@ class CLDNN(BaseModel):
         # afer conv4(batch, 80, 1, 6)
         # reshape(batch, 80, 6)
         self.lstm1 = nn.Sequential(
-            nn.GRU(input_size= 30, hidden_size= 50, num_layers= 2, batch_first= True)
+            nn.GRU(input_size= 30, hidden_size= 50, num_layers= 3, batch_first= True)
         )
         self.tanh = nn.Tanh()
         # after lstm1 (batch, 80, 50)
         # 取最后一个状态的feature (batch, 50)
-        self.dropout = nn.Dropout2d(0.5)
+        # self.dropout = nn.Dropout2d(0.5)
         # after reshape (batch, 80*50)
         self.fc1 = nn.Sequential(
             nn.Linear(in_features= 80*50, out_features= 128),
@@ -62,7 +62,7 @@ class CLDNN(BaseModel):
         x, _ = self.lstm1(x)
         x = x.reshape(x.shape[0], -1)
         x = self.tanh(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
         x = self.fc1(x)
         x = self.fc2(x)
         return x

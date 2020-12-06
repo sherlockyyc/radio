@@ -13,14 +13,14 @@ class VTCNN2(BaseModel):
             nn.ZeroPad2d(padding = (2, 2)),
             nn.Conv2d(in_channels = 1, out_channels = 256, kernel_size = (1, 3)),
             nn.ReLU(),
-            nn.Dropout(0.6)
+            # nn.Dropout(0.6)
         )
         self.conv2 = nn.Sequential(
             nn.BatchNorm2d(256),
             nn.ZeroPad2d(padding = (2, 2)),
             nn.Conv2d(in_channels = 256, out_channels = 80, kernel_size=(2, 3)),
             nn.ReLU(),
-            nn.Dropout(0.6)
+            # nn.Dropout(0.6)
         )
         self.fc1 = nn.Sequential(
             nn.Linear(10560, 256),

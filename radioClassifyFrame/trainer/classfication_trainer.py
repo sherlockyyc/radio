@@ -31,8 +31,8 @@ class ClassficationTrainer(BaseTrainer):
         
         for idx,(x, y, x_snr) in enumerate(trainloader_t):
             if self.use_gpu:
-                x = x.cuda(self.device_ids[0])
-                y = y.cuda(self.device_ids[0])
+                x = x.to(self.device)
+                y = y.to(self.device)
             x = x.float()
             y = y.long()
             self.optimizer.zero_grad()
@@ -67,8 +67,8 @@ class ClassficationTrainer(BaseTrainer):
         snr_num = np.zeros(len(self.snrs))
         for idx,(x, y, x_snr) in enumerate(test_loader_t):
             if self.use_gpu:
-                x = x.cuda(self.device_ids[0])
-                y = y.cuda(self.device_ids[0])
+                x = x.to(self.device)
+                y = y.to(self.device)
             x = x.float()
             y = y.long().cpu().detach().numpy()
             logits = self.model(x).cpu().detach().numpy()

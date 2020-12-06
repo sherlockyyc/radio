@@ -11,13 +11,13 @@ class Config(object):
         #------------------------------------------------GPU配置
         self.GPU = dict(
             use_gpu = True,             # 是否使用GPU，True表示使用
-            device_id = [1],            # 所使用的GPU设备号，type=list
+            device_id = [2],            # 所使用的GPU设备号，type=list
         )
 
 
         self.CONFIG = dict(
             dataset_name = 'Rml2016_10a',     # 所选择的数据集的名称
-            model_name = 'CLDNN',       # 攻击模型的名称
+            model_name = 'Based_LSTM',       # 攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       # 失函数的名称
             optimizer_name = 'Adam',     # 优化器的名称（torch.nn中）
             metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
@@ -28,7 +28,7 @@ class Config(object):
         #------------------------------------------------训练参数设置
         self.ARG = dict(
             epoch = 1200,         # 训练epoch
-            batch_size = 128,    # 训练集batch_size
+            batch_size = 1024,    # 训练集batch_size
         )
 
         #------------------------------------------------损失函数选择
@@ -39,7 +39,7 @@ class Config(object):
         self.VTCNN2 = dict(
             output_dim = 11,
         )
-        self.Baseline_LSTM = dict(
+        self.Based_LSTM = dict(
             output_dim = 11,
         )
         self.Based_VGG = dict(
@@ -60,7 +60,7 @@ class Config(object):
 
         #------------------------------------------------优化器
         self.Adam = dict(
-            lr = 0.0001,                  # 学习率
+            lr = 0.01,                  # 学习率
             weight_decay = 5e-3,        # 权重衰减
         )
 
@@ -75,9 +75,9 @@ class Config(object):
         
         #------------------------------------------------学习率变化
         self.LrAdjust = dict(
-            lr_step = 20,                   # 学习率变化的间隔
+            lr_step = 10,                   # 学习率变化的间隔
             lr_decay = 0.5,                 # 学习率变化的幅度
-            increase_bottom = 10,            # 退火前学习率增加的上界
+            increase_bottom = 5,            # 退火前学习率增加的上界
             increase_amp = 1.1,             # 学习率增加的幅度
             warm_lr = 0.0001,               # 当学习率小于1e-8时，恢复学习率为warm_lr
         )
@@ -85,7 +85,7 @@ class Config(object):
 
         #------------------------------------------------模型加载
         self.LoadModel = dict(
-            filename = './checkpoint/Rml2016_10a_CLDNN_V1/CLDNN_Epoch1195.pkl',     #加载模型的位置，与上面模型要对应
+            filename = './checkpoint/Rml2016_10a_Based_LSTM_V1/Based_LSTM_Epoch160.pkl',     #加载模型的位置，与上面模型要对应
             base_epoch = 0,           # 预训练的基础epoch
         )
 
