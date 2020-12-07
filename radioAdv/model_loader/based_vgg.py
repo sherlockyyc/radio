@@ -62,7 +62,7 @@ class Based_VGG(BaseModel):
         x = self.fc3(x)
         return x
 
-def loadVGG(filepath):
+def loadBased_VGG(filepath):
     """[加载LeNet网络模型]
 
     Args:
@@ -72,7 +72,7 @@ def loadVGG(filepath):
         [type]: [返回一个预训练的LeNet]
     """
     checkpoint = torch.load(filepath)
-    model = VGG(output_dim = 11)
+    model = Based_VGG(output_dim = 11)
     model.load_state_dict(checkpoint['state_dict'])  # 加载网络权重参数
     return model
     

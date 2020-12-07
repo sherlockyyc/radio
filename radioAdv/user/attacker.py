@@ -3,12 +3,15 @@ import datetime
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 
 import torch
 
 import model_loader
 from config import *
 import utils as util
+import metric as module_metric
+import pickle
 
 
 
@@ -26,13 +29,14 @@ class Attacker(object):
         self.is_target ([bool]): 是否进行目标攻击
         self.target ([int]): 目标攻击的目标 
     """
-    def __init__(self,model,criterion,config,attack_method, snrs = [], mods = []):
+    def __init__(self,model, metrics, criterion,config,attack_method, snrs = [], mods = []):
         self.model = model
         self.criterion = criterion
         self.config = config
         self.attack_method = attack_method
         self.snrs = snrs
         self.mods = mods
+        self.metrics = metrics
 
 
         #########################GPU配置
@@ -225,32 +229,101 @@ class Attacker(object):
         self.model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
         x_adv_list = []
         y_list = []
+        x_snr_list = []
         pertubmean = []
-        for idx,(x,y) in enumerate(tqdm(data_loader)):
+        for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
             x_advs ,pertubations, logits, nowLabels = self.attack_batch(x, y)
             x_adv_list.append(x_advs)
             y_list.append(y)
+            x_snr_list.append(x_snr)
             pertubmean.append(pertubations.mean())
         mean = np.mean(pertubmean)
         torch.cuda.empty_cache()
 
         model_name = self.config.Black_Attack['black_model']
         self.model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
-        data_num = 0
-        success_num = 0
-        for idx,(x_adv, y) in enumerate(tqdm(zip(x_adv_list, y_list))):
+
+        predict = []
+        targets = []
+        snr_acc = np.zeros(len(self.snrs))
+        snr_num = np.zeros(len(self.snrs))
+        total_metrics = np.zeros(len(self.metrics))
+        for idx,(x_adv, y, x_snr) in enumerate(tqdm(zip(x_adv_list, y_list, x_snr_list))):
             x_adv = torch.tensor(x_adv).to(self.device).float()
 
-            logits = self.model(x_adv).detach().cpu().numpy()
-            pred = logits.argmax(1)
-            data_num +=  x.shape[0]
-            success_num += (y.numpy() != pred).sum()
-        acc = 1 - success_num / data_num
+            logits = self.model(x).cpu().detach().numpy()
+            total_metrics += self._eval_metrics(logits,y)
 
+            predict.append(logits)
+            targets.append(y)
+
+            logits = np.argmax(logits, axis=1)
+            x_snr = x_snr.numpy()
+            for i, snr in enumerate(self.snrs):
+                if np.sum(x_snr== snr) != 0:
+                    snr_acc[i] += np.sum(logits[x_snr == snr] == y[x_snr == snr])
+                    snr_num[i] += np.sum(x_snr == snr)
+
+        snr_acc = snr_acc / snr_num
+        self.plot_snr_figure(self.figure_dir, snr_acc, self.snrs)
+
+        predict = np.vstack(predict)
+        targets = np.hstack(targets)
+        self.plot_confusion_matrix_figure(self.figure_dir, predict, targets, self.mods)
+        
         log = {}
-        log['acc'] = acc
-        log['mean'] = mean
+        for i,metric in enumerate(self.metrics):
+            log[metric.__name__] = total_metrics[i]/self.len_epoch
+        
+        log['snr_acc'] = snr_acc
+
         return log
+
+
+    def generate_data(self, data_loader):
+        model_list = ['VTCNN2', 'Based_GRU', 'Based_VGG', 'Based_ResNet', 'CLDNN']
+        # model_list = ['VTCNN2']
+        data = []
+        labels = []
+        snrs = []
+        print('开始数据处理')
+        for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
+            data.append(x)
+            labels.append(y)
+            snrs.append(x_snr)
+        print('已完成原始数据初始化')
+        for model_name in model_list:
+            print('开始模型{}校验'.format(model_name))
+            model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+
+            data, labels, snrs = self.judge_data(model, data, labels, snrs)
+            print('已完成模型{}校验'.format(model_name))
+            torch.cuda.empty_cache()
+        data = np.vstack(data)
+        labels = np.hstack(labels)
+        snrs = np.hstack(snrs)
+        dirname = '/home/yuzhen/wireless/RML2016.10a'
+        print('-----还有{}数据'.format(len(data)))
+        pickle.dump([data, labels, snrs], open(os.path.join(dirname, 'attack_data.p'), 'wb'))
+        print('-----已完成数据存储-----')
+
+    def judge_data(self, model, data, labels, snrs):
+        fresh_data = []
+        fresh_labels = []
+        fresh_snrs = []
+        for idx,(x, y, x_snr) in enumerate(tqdm(zip(data, labels, snrs))):
+            x = torch.tensor(x).to(self.device).float()
+            logits = model(x).cpu().detach().numpy()
+            predict = np.argmax(logits, axis=1)
+            x_snr = np.array(x_snr)
+            y = np.array(y)
+            index = (predict == y) & (x_snr >=0)
+            if len(x[index] > 0):
+                fresh_data.append(x[index].cpu().detach().numpy())
+                fresh_labels.append(y[index])
+                fresh_snrs.append(x_snr[index])
+        return fresh_data, fresh_labels, fresh_snrs
+
 
     
     def plot_snr_figure(self, dirname, snr_acc, snrs):
@@ -287,4 +360,19 @@ class Attacker(object):
         util.ensure_dir(dirname)
         util.plot_confusion_matrix(cm, dirname, mods)
         print("Figure 'Confusion Matrix' generated successfully")
+
+    def _eval_metrics(self,logits,targets):
+        """[多种metric的运算]
+
+        Args:
+            logits ([array]): [网络模型输出]
+            targets ([array]): [标签值]
+
+        Returns:
+            acc_metrics [array]: [多个metric对应的结果]
+        """
+        acc_metrics = np.zeros(len(self.metrics))
+        for i,metric in enumerate(self.metrics):
+            acc_metrics[i] = metric(logits,targets)
+        return acc_metrics
         

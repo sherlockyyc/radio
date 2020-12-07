@@ -75,7 +75,7 @@ class FGSM(BaseMethod):
         sign_data_grad = data_grad.sign()
 
         x_adv = x_adv + eps * sign_data_grad
-        x_adv = torch.clamp(x_adv, 0, 1)
+        # x_adv = torch.clamp(x_adv, 0, 1)
         pertubation = x_adv - x
 
         return x_adv, pertubation
@@ -102,7 +102,7 @@ class FGSM(BaseMethod):
         sign_data_grad = data_grad.sign()
 
         x_adv = x_adv - eps * sign_data_grad
-        x_adv = torch.clamp(x_adv, 0, 1)
+        # x_adv = torch.clamp(x_adv, 0, 1)
         pertubation = x_adv - x
 
         return x_adv, pertubation

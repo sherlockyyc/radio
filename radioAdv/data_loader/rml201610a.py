@@ -136,3 +136,32 @@ class Rml2016_10aTestSet(Dataset):
 
     def get_snr_and_mod(self):
         return self.snrs, self.mods
+
+
+class Rml2016_10aAttackSet(Dataset):
+    def __init__(self,dirname, prop):
+        """[加载RML2016.10a攻击集，在各种模型上分类都正确，snr>=0]
+
+        Args:
+            dirname ([str]): [RML2016.10a文件的绝对路径]]
+            prop ([float]): [训练集所占的比例]
+        """        
+
+        attack_x, attack_y, attack_snr = pickle.load(open(os.path.join(dirname, 'attack_data.p'), 'rb'))
+        snrs, mods = pickle.load(open(os.path.join(dirname, 'augments.p'), 'rb'))
+
+        self.data = attack_x
+        self.labels = attack_y
+        self.data_snr = attack_snr
+        snr_0 = snrs.index(0)
+        self.snrs = snrs[snr_0:]
+        self.mods = mods
+        
+    def __getitem__(self,idx):
+        return (self.data[idx], self.labels[idx], self.data_snr[idx])
+    
+    def __len__(self):
+        return len(self.data)
+
+    def get_snr_and_mod(self):
+        return self.snrs, self.mods

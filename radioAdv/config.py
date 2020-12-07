@@ -9,7 +9,7 @@ class Config(object):
         ##################################################GPU配置
         self.GPU = dict(
             use_gpu = True,             #是否使用GPU，True表示使用
-            device_id = [0],            #所使用的GPU设备号，type=list
+            device_id = [3],            #所使用的GPU设备号，type=list
         )
 
 
@@ -17,7 +17,8 @@ class Config(object):
             dataset_name = 'Rml2016_10a',     #所选择的数据集的名称
             model_name = 'Based_GRU',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
-            attack_name = 'PGD',       #设定攻击方法的名称
+            metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
+            attack_name = 'FGSM',       #设定攻击方法的名称
         )
 
 
@@ -25,22 +26,22 @@ class Config(object):
         #################################################模型选择
         ##########################模型参数
         self.VTCNN2 = dict(
-            filepath = '/home/baiding/Study/research/radio/log/VTCNN2/model/VTCNN2_Epoch85.pkl'
+            filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
         )
         self.Based_GRU = dict(
-            filepath = '/home/baiding/Study/research/radio/log/Based_GRU/model/Based_GRU_Epoch1260.pkl'
+            filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
         )
         self.Based_LSTM = dict(
             filepath = ''
         )
         self.Based_VGG = dict(
-            filepath = '/home/baiding/Study/research/radio/log/Based_VGG/model/Based_VGG_Epoch1160.pkl'
+            filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Epoch1160.pkl'
         )
         self.Based_ResNet = dict(
-            filepath = '/home/baiding/Study/research/radio/log/Based_ResNet/model/Based_ResNet_Epoch1160.pkl'
+            filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
         )
         self.CLDNN = dict(
-            filepath = '/home/baiding/Study/research/radio/log/CLDNN_GRU3/model/CLDNN_Epoch1160.pkl'
+            filepath = '/home/yuzhen/wireless/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
         )
 
 
@@ -57,7 +58,7 @@ class Config(object):
             is_vector = False,         #False表示得到784维向量数据，True表示得到28*28的图片数据
         )
         self.Rml2016_10a = dict(
-            dirname = "/home/baiding/Study/research/radio/RML2016.10a",  # 数据集文件路径
+            dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
             prop = 0.8,                     # 所占的比例
         )
 
@@ -66,7 +67,7 @@ class Config(object):
         #################################################攻击方法
         ##########################FGSM方法
         self.FGSM = dict(
-            eps = 1e-5,                  #FGSM的控制大小的参数
+            eps = 1e-3,                  #FGSM的控制大小的参数
             is_target = False,           #控制攻击方式，目标攻击、无目标攻击
             target = 3,               #目标攻击的目标
         )
@@ -118,8 +119,8 @@ class Config(object):
             method = 'White_Attack',        # 可选['Black_Attack', 'White_Attack']
         )
         self.Black_Attack = dict(
-            threat_model = 'LeNet',
-            black_model = 'ResNet18',
+            threat_model = 'VTCNN2',
+            black_model = 'Based_GRU',
         )
 
     def log_output(self):
