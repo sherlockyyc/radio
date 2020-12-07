@@ -165,3 +165,22 @@ class Rml2016_10aAttackSet(Dataset):
 
     def get_snr_and_mod(self):
         return self.snrs, self.mods
+
+
+class Rml2016_10aAdvSampleSet(Dataset):
+    def __init__(self, adv_sample, targets, x_snrs):
+        """[用于训练过程中生成的对抗样本构建数据集]
+
+        Args:
+            dirname ([str]): [RML2016.10a文件的绝对路径]]
+            prop ([float]): [训练集所占的比例]
+        """        
+        self.data = adv_sample
+        self.labels = targets
+        self.data_snr = x_snrs
+        
+    def __getitem__(self,idx):
+        return (self.data[idx], self.labels[idx], self.data_snr[idx])
+    
+    def __len__(self):
+        return len(self.data)

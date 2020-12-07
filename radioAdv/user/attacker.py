@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
 import torch
+from torch.utils.data import DataLoader
 
 import model_loader
 from config import *
 import utils as util
 import metric as module_metric
+import data_loader as module_data_loader
 import pickle
 
 
@@ -72,7 +74,7 @@ class Attacker(object):
 
 
 
-    def attack_batch(self, x, y):
+    def attack_batch(self, model, x, y):
         """[对一组数据进行攻击]]
 
         Args:
@@ -114,11 +116,11 @@ class Attacker(object):
         """
         x = np.expand_dims(x, axis=0)                    #拓展成四维
         y = np.array(list([y]))                         #转成矩阵
-        x_adv,pertubation,nowLabel = self.attack_batch(x, y)
+        x_adv,pertubation,nowLabel = self.attack_batch(self.model, x, y)
         return x[0], x_adv[0], pertubation[0] ,nowLabel[0]
 
 
-    def attack_set(self, data_loader):
+    def attack_set(self, model, data_loader):
         """[对一个数据集进行攻击]
 
         Args:
@@ -151,9 +153,7 @@ class Attacker(object):
         snr_num = np.zeros(len(self.snrs))
 
         for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
-            x_advs ,pertubations, logits, nowLabels = self.attack_batch(x, y)
-            # print(x[0])
-            # break
+            x_advs ,pertubations, logits, nowLabels = self.attack_batch(model, x, y)
             y = y.detach().cpu().numpy()
             # 计算平均攻击成功率, 
             if self.is_target:
@@ -214,7 +214,7 @@ class Attacker(object):
         log['pertub_prop'] = pertub_prop
         log['pertub_max'] = pertub_max
         log['snr_acc'] = snr_acc
-        return log, real_sample, adv_sample, adv_pertub, x_snrs
+        return log, real_sample, adv_sample, adv_pertub, targets, x_snrs
 
     def start_attack(self, data_loader):
         attack_method = self.config.Switch_Method['method']
@@ -228,7 +228,7 @@ class Attacker(object):
         return log
 
     def white_attack(self, data_loader):
-        log, _, _, _, _ = self.attack_set(data_loader)
+        log, _, _, _, _, _ = self.attack_set(self.model, data_loader)
         return log
 
 
@@ -244,34 +244,40 @@ class Attacker(object):
             acc [float]: [攻击后的准确率]
             mean [float]: 平均扰动大小
         """
-        model_name = self.config.Black_Attack['threat_model']
-        self.model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
-        x_adv_list = []
-        y_list = []
-        x_snr_list = []
-        pertubmean = []
-        for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
-            x_advs ,pertubations, logits, nowLabels = self.attack_batch(x, y)
-            x_adv_list.append(x_advs)
-            y_list.append(y)
-            x_snr_list.append(x_snr)
-            pertubmean.append(pertubations.mean())
-        mean = np.mean(pertubmean)
+        log = {}
 
-        acc = 1 - success_num / data_num
-        pertub_prop = pertub_num / pertub_sum
-        log['acc'] = acc
-        log['pertubmean'] = mean
-        log['pertub_prop'] = pertub_prop
-        log['pertub_max'] = pertub_max
+        model_name = self.config.Black_Attack['threat_model']
+        white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+        white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
+        # x_adv_list = []
+        # y_list = []
+        # x_snr_list = []
+        # pertubmean = []
+        # for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
+        #     x_advs ,pertubations, logits, nowLabels = self.attack_batch(x, y)
+        #     x_adv_list.append(x_advs)
+        #     y_list.append(y)
+        #     x_snr_list.append(x_snr)
+        #     pertubmean.append(pertubations.mean())
+        # mean = np.mean(pertubmean)
+        
+        for key, value in white_log.items():
+            log['White_model   '+key] = value
+
 
         torch.cuda.empty_cache()
 
         model_name = self.config.Black_Attack['black_model']
         black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
 
-        black_log = self._model_test(black_model, zip(x_adv_list, y_list, x_snr_list))
-        log.update(black_log)
+        black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
+        adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
+
+        black_log = self._model_test(black_model, adv_loader)
+
+
+        for key, value in black_log.items():
+            log['Black_model   '+key] = value
 
         return log
 
@@ -283,14 +289,16 @@ class Attacker(object):
         total_metrics = np.zeros(len(self.metrics))
         for idx,(x_adv, y, x_snr) in enumerate(tqdm(data_loader)):
             x_adv = torch.tensor(x_adv).to(self.device).float()
+            y = np.array(y)
 
-            logits = self.model(x).cpu().detach().numpy()
-            total_metrics += self._eval_metrics(logits,y)
+            logits = self.model(x_adv).cpu().detach().numpy()
+            total_metrics += self._eval_metrics(logits, y)
 
             predict.append(logits)
             targets.append(y)
 
             logits = np.argmax(logits, axis=1)
+            # print(logits)
             x_snr = x_snr.numpy()
             for i, snr in enumerate(self.snrs):
                 if np.sum(x_snr== snr) != 0:
@@ -306,7 +314,7 @@ class Attacker(object):
         
         log = {}
         for i,metric in enumerate(self.metrics):
-            log[metric.__name__] = total_metrics[i]/self.len_epoch
+            log[metric.__name__] = total_metrics[i]/len(data_loader)
         
         log['snr_acc'] = snr_acc
 
