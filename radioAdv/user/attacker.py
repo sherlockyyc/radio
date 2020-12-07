@@ -141,6 +141,12 @@ class Attacker(object):
 
         predict = []
         targets = []
+
+        real_sample = []
+        adv_sample = []
+        adv_pertub = []
+        x_snrs = []
+
         snr_acc = np.zeros(len(self.snrs))
         snr_num = np.zeros(len(self.snrs))
 
@@ -158,7 +164,7 @@ class Attacker(object):
                 success_num += (y != nowLabels).sum()
 
             # 统计平均扰动值
-            pertubmean.append(pertubations.mean())
+            pertubmean.append(np.abs(pertubations).mean())
 
             # 计算平均扰动比例            
             pertub_sum += np.sum(pertubations != None)
@@ -172,6 +178,13 @@ class Attacker(object):
             # 保存预测结果
             predict.append(logits)
             targets.append(y)
+
+            # 用来保存信息
+            real_sample.append(x)
+            adv_sample.append(x_advs)
+            adv_pertub.append(pertubations)
+            x_snrs.append(x_snr)
+
             # 计算各snr下的准确率
             x_snr = x_snr.numpy()
             for i, snr in enumerate(self.snrs):
@@ -185,6 +198,12 @@ class Attacker(object):
         # 绘制混淆矩阵
         predict = np.vstack(predict)
         targets = np.hstack(targets)
+
+        real_sample = np.vstack(real_sample)
+        adv_sample = np.vstack(adv_sample)
+        adv_pertub = np.vstack(adv_pertub)
+        x_snrs = np.hstack(x_snrs)
+
         self.plot_confusion_matrix_figure(self.figure_dir, predict, targets, self.mods)
         # 记录攻击结果
         mean = np.mean(pertubmean)
@@ -195,7 +214,7 @@ class Attacker(object):
         log['pertub_prop'] = pertub_prop
         log['pertub_max'] = pertub_max
         log['snr_acc'] = snr_acc
-        return log
+        return log, real_sample, adv_sample, adv_pertub, x_snrs
 
     def start_attack(self, data_loader):
         attack_method = self.config.Switch_Method['method']
@@ -209,7 +228,7 @@ class Attacker(object):
         return log
 
     def white_attack(self, data_loader):
-        log = self.attack_set(data_loader)
+        log, _, _, _, _ = self.attack_set(data_loader)
         return log
 
 
@@ -238,17 +257,31 @@ class Attacker(object):
             x_snr_list.append(x_snr)
             pertubmean.append(pertubations.mean())
         mean = np.mean(pertubmean)
+
+        acc = 1 - success_num / data_num
+        pertub_prop = pertub_num / pertub_sum
+        log['acc'] = acc
+        log['pertubmean'] = mean
+        log['pertub_prop'] = pertub_prop
+        log['pertub_max'] = pertub_max
+
         torch.cuda.empty_cache()
 
         model_name = self.config.Black_Attack['black_model']
-        self.model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+        black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
 
+        black_log = self._model_test(black_model, zip(x_adv_list, y_list, x_snr_list))
+        log.update(black_log)
+
+        return log
+
+    def _model_test(self, model, data_loader):
         predict = []
         targets = []
         snr_acc = np.zeros(len(self.snrs))
         snr_num = np.zeros(len(self.snrs))
         total_metrics = np.zeros(len(self.metrics))
-        for idx,(x_adv, y, x_snr) in enumerate(tqdm(zip(x_adv_list, y_list, x_snr_list))):
+        for idx,(x_adv, y, x_snr) in enumerate(tqdm(data_loader)):
             x_adv = torch.tensor(x_adv).to(self.device).float()
 
             logits = self.model(x).cpu().detach().numpy()
