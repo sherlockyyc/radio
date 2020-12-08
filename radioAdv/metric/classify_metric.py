@@ -2,7 +2,7 @@ import numpy as np
 
 
 
-def accuary(logits,target):
+def accuracy(logits,target):
     """[计算准确率]
 
     Args:

@@ -17,8 +17,8 @@ class Config(object):
             dataset_name = 'Rml2016_10a',     #所选择的数据集的名称
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
-            metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'NI_FGSM',       #设定攻击方法的名称
+            metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
+            attack_name = 'PGD',       #设定攻击方法的名称
         )
 
 
@@ -138,7 +138,7 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'Black_Attack',        # 可选['Black_Attack', 'White_Attack']
+            method = 'Shifting_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
@@ -156,7 +156,7 @@ class Config(object):
             else:
                 log[name] = value
         log['Switch_Method'] = self.Switch_Method['method']
-        if self.Switch_Method['method'] == 'Black_Attack':
+        if self.Switch_Method['method'] != 'White_Attack':
             log.update(self.Black_Attack)
         return log
         

@@ -225,6 +225,12 @@ class Attacker(object):
             threat_model = self.config.Black_Attack['threat_model']
             black_model = self.config.Black_Attack['black_model']
             log = self.black_attack(data_loader, threat_model, black_model)
+        elif attack_method == 'Shifting_Attack':
+            threat_model = self.config.Black_Attack['threat_model']
+            black_model = self.config.Black_Attack['black_model']
+            log = self.shifting_attack(data_loader, threat_model, black_model)
+
+
         return log
 
     def white_attack(self, data_loader):
@@ -249,17 +255,6 @@ class Attacker(object):
         model_name = self.config.Black_Attack['threat_model']
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
         white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
-        # x_adv_list = []
-        # y_list = []
-        # x_snr_list = []
-        # pertubmean = []
-        # for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
-        #     x_advs ,pertubations, logits, nowLabels = self.attack_batch(x, y)
-        #     x_adv_list.append(x_advs)
-        #     y_list.append(y)
-        #     x_snr_list.append(x_snr)
-        #     pertubmean.append(pertubations.mean())
-        # mean = np.mean(pertubmean)
         
         for key, value in white_log.items():
             log['White_model   '+key] = value
@@ -281,13 +276,77 @@ class Attacker(object):
 
         return log
 
+    def shifting_attack(self, data_loader, threat_model, black_model):
+        """[对一个模型进行噪声偏移的攻击]
+
+        Args:
+            data_loader ([DataLoader]): [数据加载器]
+            threat_model ([Model]): [用于生成对抗样本的白盒模型]
+            black_model ([Model]): [用于攻击的黑盒模型]
+
+        Returns:
+            acc [float]: [攻击后的准确率]
+            mean [float]: 平均扰动大小
+        """
+        log = {}
+
+        model_name = self.config.Black_Attack['threat_model']
+        white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+        white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
+        
+        for key, value in white_log.items():
+            log['White_model   '+key] = value
+
+
+        torch.cuda.empty_cache()
+
+        model_name = self.config.Black_Attack['black_model']
+        black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+
+        black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
+        adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
+
+        black_log = self._model_test(black_model, adv_loader)
+
+
+        for key, value in black_log.items():
+            log['Black_model   '+key] = value
+
+            
+        torch.cuda.empty_cache()
+
+        adv_sample_tranfer = adv_sample.copy()
+
+        acc = 0
+        snr_acc = np.zeros(len(self.snrs))
+        for i in tqdm(range(128 - 1)):
+            zero_shape = list(adv_pertub.shape)
+            zero_shape[-1] = 1
+            zero = np.zeros(tuple(zero_shape))
+            adv_pertub_tranfer = np.concatenate((zero, adv_pertub),axis=-1)[:, :, :, :-1]
+            adv_sample_tranfer = real_sample + adv_pertub_tranfer
+
+            black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample_tranfer, targets, x_snrs)
+            adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
+
+            black_log = self._model_test(black_model, adv_loader)
+
+            acc += black_log['accuracy']
+            snr_acc += black_log['snr_acc']
+
+    
+        log['shifting_acc'] = acc/127
+        log['shifting_snr_acc'] = snr_acc/127
+
+        return log
+
     def _model_test(self, model, data_loader):
         predict = []
         targets = []
         snr_acc = np.zeros(len(self.snrs))
         snr_num = np.zeros(len(self.snrs))
         total_metrics = np.zeros(len(self.metrics))
-        for idx,(x_adv, y, x_snr) in enumerate(tqdm(data_loader)):
+        for idx,(x_adv, y, x_snr) in enumerate(data_loader):
             x_adv = torch.tensor(x_adv).to(self.device).float()
             y = np.array(y)
 
@@ -306,11 +365,11 @@ class Attacker(object):
                     snr_num[i] += np.sum(x_snr == snr)
 
         snr_acc = snr_acc / snr_num
-        self.plot_snr_figure(self.figure_dir, snr_acc, self.snrs)
+        # self.plot_snr_figure(self.figure_dir, snr_acc, self.snrs)
 
         predict = np.vstack(predict)
         targets = np.hstack(targets)
-        self.plot_confusion_matrix_figure(self.figure_dir, predict, targets, self.mods)
+        # self.plot_confusion_matrix_figure(self.figure_dir, predict, targets, self.mods)
         
         log = {}
         for i,metric in enumerate(self.metrics):
