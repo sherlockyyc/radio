@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'Shifting_MI_FGSM',       #设定攻击方法的名称
+            attack_name = 'FGSM',       #设定攻击方法的名称
         )
 
 
@@ -113,7 +113,7 @@ class Config(object):
         )
         ## MI-FGSM
         self.MI_FGSM = dict(
-            eps = 13*1e-4,                # 控制大小的参数
+            eps = 1*1e-4,                # 控制大小的参数
             epoch = 30,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
@@ -129,7 +129,7 @@ class Config(object):
         )
         ## Shifting_MI-FGSM
         self.Shifting_MI_FGSM = dict(
-            eps = 13*1e-4,                # 控制大小的参数
+            eps = 1e-4,                # 控制大小的参数
             epoch = 30,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标

@@ -315,15 +315,18 @@ class Attacker(object):
             
         torch.cuda.empty_cache()
 
+        black_model = black_model.to(self.device)
         adv_sample_tranfer = adv_sample.copy()
+        adv_pertub_tranfer = adv_pertub.copy()
 
         acc = 0
         snr_acc = np.zeros(len(self.snrs))
+        shift_acc_list = []
         for i in tqdm(range(128 - 1)):
             zero_shape = list(adv_pertub.shape)
             zero_shape[-1] = 1
             zero = np.zeros(tuple(zero_shape))
-            adv_pertub_tranfer = np.concatenate((zero, adv_pertub),axis=-1)[:, :, :, :-1]
+            adv_pertub_tranfer = np.concatenate((zero, adv_pertub_tranfer),axis=-1)[:, :, :, :-1]
             adv_sample_tranfer = real_sample + adv_pertub_tranfer
 
             black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample_tranfer, targets, x_snrs)
@@ -333,10 +336,12 @@ class Attacker(object):
 
             acc += black_log['accuracy']
             snr_acc += black_log['snr_acc']
+            shift_acc_list.append(black_log['accuracy'])
 
     
         log['shifting_acc'] = acc/127
         log['shifting_snr_acc'] = snr_acc/127
+        log['shift_acc_list'] = shift_acc_list
 
         return log
 
