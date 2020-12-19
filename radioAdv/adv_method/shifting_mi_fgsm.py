@@ -1,7 +1,7 @@
 '''
 Author: BaiDing
 Date: 2020-12-10 15:06:05
-LastEditTime: 2020-12-10 16:44:40
+LastEditTime: 2020-12-19 13:02:20
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_mi_fgsm.py
@@ -10,6 +10,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from adv_method.base_method import BaseMethod
+import pickle
+import os
 
 class Shifting_MI_FGSM(BaseMethod):
     """[BIM]
@@ -27,7 +29,7 @@ class Shifting_MI_FGSM(BaseMethod):
         """
         super(Shifting_MI_FGSM,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, eps=0.03, epoch=5, is_target=False, target=0, mu = 1):
+    def attack(self, x, y=0, x_snr=[], eps=0.03, epoch=5, is_target=False, target=0, mu = 1):
         """[summary]
 
         Args:
@@ -45,28 +47,40 @@ class Shifting_MI_FGSM(BaseMethod):
         """
         self.model.train()
         if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, epoch, eps, mu)
+            x_adv,pertubation = self._attackWithTarget(x, x_snr, target, epoch, eps, mu)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, epoch, eps, mu)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, x_snr, epoch, eps, mu)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()
+        x_adv = torch.tensor(x_adv).to(self.device).float()
         logits = self.model(x_adv).cpu().detach().numpy()
         pred = logits.argmax(1)
 
         x_adv = x_adv.cpu().detach().numpy()
-        pertubation = pertubation.cpu().detach().numpy()
+        pertubation = pertubation
         
         return x_adv, pertubation, logits, pred
 
 
-    def _attackWithNoTarget(self, x, y, epoch, eps, mu):
+    def _attackWithNoTarget(self, x, y, x_snr, epoch, eps, mu):
         pretubation_list = []
-        pretubation_mean = torch.tensor(np.zeros(x.shape)).to(self.device)
+        pretubation_mean = np.zeros(x.shape)
+
+        dirname = './tmp_parameters'
+        parameter_name = 'shifting_pertubation_1.p'
+        if not os.path.exists(os.path.join(dirname, parameter_name)):
+            x_list = []
+            y_list = []
+            x_snr_list = []
+            pretubation_mean_list = []
+            pretubation_list_list = []
+        else:
+            x_list, y_list, x_snr_list, pretubation_mean_list, pretubation_list_list = pickle.load(open(os.path.join(dirname, parameter_name), 'rb'))
         
-        for shift in range(0, 127, 2):
+        for shift in range(128):
             mask_shifting = np.ones(x.shape)
             mask_shifting[:,:,:,:shift] = 0
             mask_shifting = torch.tensor(mask_shifting).to(self.device)
@@ -91,17 +105,34 @@ class Shifting_MI_FGSM(BaseMethod):
 
                 x_adv = x_adv.detach() + eps * sign_data_grad * mask_shifting
                 # x_adv = torch.clamp(x_adv, 0, 1)
-            pertubation = x_adv - x
+            pertubation = (x_adv - x).detach().cpu().numpy()
             pretubation_list.append(pertubation)
             pretubation_mean += pertubation
 
-        pretubation_mean = pretubation_mean/(126/2)
+        divide_ratio = np.array([i+1 for i in range(128)])
+
+        pretubation_mean = pretubation_mean/divide_ratio
+
+        multi_ratio = np.array([i/100 for i in range(128, 0, -1)])
+        multi_ratio = np.exp(multi_ratio)
+        multi_ratio = multi_ratio / np.sum(multi_ratio)
+        pretubation_mean = pretubation_mean * multi_ratio
+
+        x = x.detach().cpu().numpy()
         x_adv = x + pretubation_mean
-        x_adv = x_adv.float()
+        # x_adv = x_adv.float()
+
+        x_list.append(x)
+        y_list.append(y.detach().cpu().numpy())
+        x_snr_list.append(x_snr.detach().cpu().numpy())
+        pretubation_mean_list.append(pretubation_mean)
+        shif_pertubation = np.concatenate(pretubation_list, axis = 1)
+        pretubation_list_list.append(shif_pertubation)
+        pickle.dump([x_list, y_list, x_snr_list, pretubation_mean_list, pretubation_list_list], open(os.path.join(dirname, parameter_name), 'wb'))
 
         return x_adv, pertubation
 
-    def _attackWithTarget(self, x, target, epoch, eps, mu):
+    def _attackWithTarget(self, x, x_snr, target, epoch, eps, mu):
         target = torch.tensor([target]*x.shape[0]).to(self.device)
         x_adv = x + torch.Tensor(np.random.uniform(-eps, eps, x.shape)).type_as(x)
         g = 0

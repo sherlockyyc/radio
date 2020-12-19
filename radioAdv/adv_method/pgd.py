@@ -19,7 +19,7 @@ class PGD(BaseMethod):
         """
         super(PGD,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, eps=0.03, epoch=5, is_target=False, target=0):
+    def attack(self, x, y=0, x_snr=[], eps=0.03, epoch=5, is_target=False, target=0):
         """[summary]
 
         Args:

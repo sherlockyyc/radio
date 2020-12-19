@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'FGSM',       #设定攻击方法的名称
+            attack_name = 'Shifting_Noise_Extend',       #设定攻击方法的名称
         )
 
 
@@ -135,6 +135,14 @@ class Config(object):
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
         )
+        self.Shifting_Noise_Extend = dict(
+            eps = 1e-4,                # 控制大小的参数
+            epoch = 30,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+            shift = 20,                 # 在两边扩充noise, 20 + noise + 20
+        )
 
         #################################################log
         self.Checkpoint = dict(
@@ -146,11 +154,16 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'Shifting_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
+            method = 'Shifting_Attack_Average',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack', 'White_Attack_Average', 'Black_Attack_Average', 'Shifting_Attack_Average']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
             black_model = 'Based_GRU',
+        )
+        self.Shifting_Attack = dict(
+            load_parameter = False,         # 是否加载预攻击的扰动
+            parameter_path = './tmp_parameters/shifting_pertubation_1.p',   #
+            shift_k = 64
         )
 
     def log_output(self):

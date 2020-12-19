@@ -74,7 +74,7 @@ class Attacker(object):
 
 
 
-    def attack_batch(self, model, x, y):
+    def attack_batch(self, model, x, y, x_snr):
         """[对一组数据进行攻击]]
 
         Args:
@@ -97,7 +97,7 @@ class Attacker(object):
 
 
         x_advs, pertubations, logits, nowLabels = self.attack_method.attack(
-            x, y, **getattr(self.config, self.config.CONFIG['attack_name']))
+            x, y, x_snr, **getattr(self.config, self.config.CONFIG['attack_name']))
 
         return x_advs, pertubations, logits, nowLabels 
 
@@ -116,7 +116,7 @@ class Attacker(object):
         """
         x = np.expand_dims(x, axis=0)                    #拓展成四维
         y = np.array(list([y]))                         #转成矩阵
-        x_adv,pertubation,nowLabel = self.attack_batch(self.model, x, y)
+        x_adv,pertubation,nowLabel = self.attack_batch(self.model, x, y, None)
         return x[0], x_adv[0], pertubation[0] ,nowLabel[0]
 
 
@@ -153,7 +153,7 @@ class Attacker(object):
         snr_num = np.zeros(len(self.snrs))
 
         for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
-            x_advs ,pertubations, logits, nowLabels = self.attack_batch(model, x, y)
+            x_advs ,pertubations, logits, nowLabels = self.attack_batch(model, x, y, x_snr)
             y = y.detach().cpu().numpy()
             # 计算平均攻击成功率, 
             if self.is_target:
@@ -228,7 +228,18 @@ class Attacker(object):
         elif attack_method == 'Shifting_Attack':
             threat_model = self.config.Black_Attack['threat_model']
             black_model = self.config.Black_Attack['black_model']
-            log = self.shifting_attack(data_loader, threat_model, black_model)
+            log = self.shifting_attack(data_loader, threat_model, black_model, **getattr(self.config, attack_method))
+
+        elif attack_method == 'White_Attack_Average':
+            log = self.white_attack_average(data_loader)
+        elif attack_method == 'Black_Attack_Average':
+            threat_model = self.config.Black_Attack['threat_model']
+            black_model = self.config.Black_Attack['black_model']
+            log = self.black_attack_average(data_loader, threat_model, black_model)
+        elif attack_method == 'Shifting_Attack_Average':
+            threat_model = self.config.Black_Attack['threat_model']
+            black_model = self.config.Black_Attack['black_model']
+            log = self.shifting_attack_average(data_loader, threat_model, black_model, **getattr(self.config, 'Shifting_Attack'))
 
 
         return log
@@ -251,7 +262,6 @@ class Attacker(object):
             mean [float]: 平均扰动大小
         """
         log = {}
-
         model_name = self.config.Black_Attack['threat_model']
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
         white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
@@ -265,6 +275,18 @@ class Attacker(object):
         model_name = self.config.Black_Attack['black_model']
         black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
 
+        # 对Shifting_Noise_Extend攻击方式的噪声进行特殊处理，对每一个扰动，都进行随机的选择
+        if self.config.CONFIG['attack_name'] == 'Shifting_Noise_Extend':
+            pertubation = []
+            shift = self.config.Shifting_Noise_Extend['shift']
+            for i in range(adv_pertub.shape[0]):
+                random_shift = np.random.randint(0, 2*shift + 1)
+                random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
+                pertubation.append(random_pertubation)
+            pertubation = np.stack(pertubation)
+            adv_sample = real_sample + pertubation
+
+
         black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
         adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
 
@@ -276,7 +298,7 @@ class Attacker(object):
 
         return log
 
-    def shifting_attack(self, data_loader, threat_model, black_model):
+    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k):
         """[对一个模型进行噪声偏移的攻击]
 
         Args:
@@ -290,18 +312,41 @@ class Attacker(object):
         """
         log = {}
 
+
+        #  进行白盒攻击， 得到对抗样本
         model_name = self.config.Black_Attack['threat_model']
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
-        white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
-        
+        if not load_parameter:
+            white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
+        else:
+            real_sample, adv_sample, targets, x_snrs, adv_pertub = self.load_pertub_parameter(parameter_path)
+            shift_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
+            shift_loader = DataLoader(shift_dataset, batch_size = 32, shuffle = False, num_workers = 4)
+            white_log = self._model_test(white_model, shift_loader)
+
+        pertub_mean = np.mean(np.abs(adv_pertub))
+        log['pertub_mean'] = pertub_mean
+
         for key, value in white_log.items():
             log['White_model   '+key] = value
 
 
         torch.cuda.empty_cache()
 
+        #  进行黑盒攻击
         model_name = self.config.Black_Attack['black_model']
         black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+
+        # 对Shifting_Noise_Extend攻击方式的噪声进行特殊处理，对每一个扰动，都进行随机的选择
+        if self.config.CONFIG['attack_name'] == 'Shifting_Noise_Extend':
+            pertubation = []
+            shift = self.config.Shifting_Noise_Extend['shift']
+            for i in range(adv_pertub.shape[0]):
+                random_shift = np.random.randint(0, 2*shift + 1)
+                random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
+                pertubation.append(random_pertubation)
+            pertubation = np.stack(pertubation)
+            adv_sample = real_sample + pertubation
 
         black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
         adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
@@ -315,18 +360,47 @@ class Attacker(object):
             
         torch.cuda.empty_cache()
 
+        # 进行shifting 黑盒攻击
         black_model = black_model.to(self.device)
         adv_sample_tranfer = adv_sample.copy()
-        adv_pertub_tranfer = adv_pertub.copy()
+        
 
         acc = 0
         snr_acc = np.zeros(len(self.snrs))
         shift_acc_list = []
-        for i in tqdm(range(128 - 1)):
-            zero_shape = list(adv_pertub.shape)
-            zero_shape[-1] = 1
-            zero = np.zeros(tuple(zero_shape))
-            adv_pertub_tranfer = np.concatenate((zero, adv_pertub_tranfer),axis=-1)[:, :, :, :-1]
+        for k in tqdm(range(-shift_k, shift_k+1, 1)):
+            # 对Shifting_Noise_Extend攻击方式的噪声进行特殊处理，对每一个扰动，都进行随机的选择
+            if self.config.CONFIG['attack_name'] == 'Shifting_Noise_Extend':
+                shift = self.config.Shifting_Noise_Extend['shift']
+
+                first_pertubation = []          # 第一次发射的扰动
+                second_pertubation = []         # 第二次发射的扰动
+                for i in range(adv_pertub.shape[0]):
+                    random_shift = np.random.randint(0, 2*shift + 1)
+                    random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
+                    first_pertubation.append(random_pertubation)
+
+                    random_shift = np.random.randint(0, 2*shift + 1)
+                    random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
+                    second_pertubation.append(random_pertubation)
+                first_pertubation = np.stack(pertubation)
+                second_pertubation = np.stack(pertubation)
+            
+            else:
+                first_pertubation = adv_pertub.copy()
+                second_pertubation = adv_pertub.copy()
+
+            if k > 0:
+                # 扰动在信号的后面
+                first_noise = first_pertubation[:, :, :, :128 - k]
+                second_noise = second_pertubation[:, :, :, :k]
+                adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
+            elif k < 0:
+                # 扰动在信号的前面
+                first_noise = first_pertubation[:, :, :, : -k]
+                second_noise = second_pertubation[:, :, :, :128 + k]
+                adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
+
             adv_sample_tranfer = real_sample + adv_pertub_tranfer
 
             black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample_tranfer, targets, x_snrs)
@@ -339,11 +413,170 @@ class Attacker(object):
             shift_acc_list.append(black_log['accuracy'])
 
     
-        log['shifting_acc'] = acc/127
-        log['shifting_snr_acc'] = snr_acc/127
+        log['shifting_acc'] = acc/(2 * shift_k + 1)
+        log['shifting_snr_acc'] = snr_acc/(2 * shift_k + 1)
         log['shift_acc_list'] = shift_acc_list
 
         return log
+
+    def white_attack_average(self, data_loader):
+        # 该函数仅针对Shifting_Noise_Extend,由于其随机性，计算其平均成功率
+        log = {}
+        acc_average = 0
+        pertubmean_average = 0
+        pertub_prop_average = 0
+        pertub_max_average = 0
+        snr_acc_average = np.zeros(10)
+        for i in range(10):
+            print('第{}次白盒攻击，开始--------------'.format(i))
+            attack_log = self.white_attack(data_loader)
+
+            acc_average += attack_log['acc']
+            pertubmean_average += attack_log['pertubmean']
+            pertub_prop_average += attack_log['pertub_prop']
+            pertub_max_average += attack_log['pertub_max']
+            snr_acc_average += np.array(attack_log['snr_acc'])
+
+        log['acc_average'] = acc_average/10
+        log['pertubmean_average'] = pertubmean_average/10
+        log['pertub_prop_average'] = pertub_prop_average/10
+        log['pertub_max_average'] = pertub_max_average/10
+        log['snr_acc_average'] = snr_acc_average/10
+        return log
+
+    def black_attack_average(self, data_loader, threat_model, black_model):
+        # 该函数仅针对Shifting_Noise_Extend,由于其随机性，计算其平均成功率
+        log = {}
+        white_acc_average = 0
+        white_pertubmean_average = 0
+        white_pertub_prop_average = 0
+        white_pertub_max_average = 0
+        white_snr_acc_average = np.zeros(10)
+
+        black_acc_average = 0
+        black_snr_acc_average = np.zeros(10)
+
+        for i in range(10):
+            print('第{}次黑盒攻击，开始--------------'.format(i))
+            attack_log = self.black_attack(data_loader, threat_model, black_model)
+            
+            white_acc_average += attack_log['White_model   acc']
+            white_pertubmean_average += attack_log['White_model   pertubmean']
+            white_pertub_prop_average += attack_log['White_model   pertub_prop']
+            white_pertub_max_average += attack_log['White_model   pertub_max']
+            white_snr_acc_average += np.array(attack_log['White_model   snr_acc'])
+
+            black_acc_average += attack_log['Black_model   accuracy']
+            black_snr_acc_average += np.array(attack_log['Black_model   snr_acc'])
+
+
+        log['White_model   acc_average'] = white_acc_average/10
+        log['White_model   pertubmean_average'] = white_pertubmean_average/10
+        log['White_model   pertub_prop_average'] = white_pertub_prop_average/10
+        log['White_model   pertub_max_average'] = white_pertub_max_average/10
+        log['White_model   snr_acc_average'] = white_pertub_max_average/10
+
+        log['Black_model   acc_average'] = black_acc_average/10
+        log['Black_model   snr_acc_average'] = black_snr_acc_average/10
+        return log
+
+    def shifting_attack_average(self, data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k):
+        # 该函数仅针对Shifting_Noise_Extend,由于其随机性，计算其平均成功率
+        log = {}
+        white_acc_average = 0
+        white_pertubmean_average = 0
+        white_pertub_prop_average = 0
+        white_pertub_max_average = 0
+        white_snr_acc_average = np.zeros(10)
+
+        black_acc_average = 0
+        black_snr_acc_average = np.zeros(10)
+
+        shift_acc_average = 0
+        shift_snr_acc_average = np.zeros(10)
+        for i in range(10):
+            print('第{}次平移攻击，开始--------------'.format(i))
+            attack_log = self.shifting_attack(data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k)
+            
+            white_acc_average += attack_log['White_model   acc']
+            white_pertubmean_average += attack_log['White_model   pertubmean']
+            white_pertub_prop_average += attack_log['White_model   pertub_prop']
+            white_pertub_max_average += attack_log['White_model   pertub_max']
+            white_snr_acc_average += np.array(attack_log['White_model   snr_acc'])
+
+            black_acc_average += attack_log['Black_model   accuracy']
+            black_snr_acc_average += np.array(attack_log['Black_model   snr_acc'])
+
+            shift_acc_average += attack_log['shifting_acc']
+            shift_snr_acc_average += np.array(attack_log['shifting_snr_acc'])
+
+
+        log['White_model   acc_average'] = white_acc_average/10
+        log['White_model   pertubmean_average'] = white_pertubmean_average/10
+        log['White_model   pertub_prop_average'] = white_pertub_prop_average/10
+        log['White_model   pertub_max_average'] = white_pertub_max_average/10
+        log['White_model   snr_acc_average'] = white_snr_acc_average/10
+
+        log['Black_model   acc_average'] = black_acc_average/10
+        log['Black_model   snr_acc_average'] = black_snr_acc_average/10
+
+        log['Shifting_model   acc_average'] = shift_acc_average/10
+        log['Shifting_model   snr_acc_average'] = shift_snr_acc_average/10
+        return log
+        
+
+    def load_pertub_parameter(self, parameter_path):
+        if not os.path.exists(parameter_path):
+            print('there is no '+ parameter_path)
+            return 
+        x_list, y_list, x_snr_list, pretubation_mean_list, pretubation_list_list = pickle.load(open(parameter_path, 'rb'))
+        data = np.vstack(np.array(x_list))
+        targets = np.hstack(np.array(y_list))
+        x_snrs = np.hstack(np.array(x_snr_list))
+
+
+        adv_sample = []
+        adv_pertub = []
+        # print(len(x_list))
+        for i in range(len(x_list)):
+            pertubation_list = pretubation_list_list[i]
+            zero_shape = list(pertubation_list.shape)
+            
+            pertubation_shape = zero_shape.copy()
+            pertubation_shape[1] = 1
+            pertubation_after_shift = np.zeros(tuple(pertubation_shape))
+
+            zero_shape[1] = 1
+            zero_shape[-1] = 1
+            zero = np.zeros(tuple(zero_shape))
+
+            
+            for shift in range(128):
+                pertubation_shift = pertubation_list[:, shift:shift+1, :, :]
+                adv_pertub_tranfer = np.concatenate((pertubation_shift, zero),axis=-1)[:, :, :, 1:]
+                pertubation_after_shift += adv_pertub_tranfer
+
+            # divide_ratio = np.array([i+1 for i in range(128)])
+
+            # pretubation_mean = pertubation_after_shift/divide_ratio
+
+            # multi_ratio = np.array([i/100 for i in range(128, 0, -1)])
+            # multi_ratio = np.exp(multi_ratio)
+            # multi_ratio = multi_ratio / np.sum(multi_ratio)
+
+            # pertubation_after_shift = pertubation_after_shift * multi_ratio
+            x_adv = x_list[i] + pertubation_after_shift
+
+            adv_sample.append(x_adv)
+            adv_pertub.append(pertubation_after_shift)
+
+        adv_sample = np.vstack(adv_sample)
+        adv_pertub = np.vstack(adv_pertub)
+
+        return data, adv_sample, targets, x_snrs, adv_pertub
+
+            # print(pretubation_list.shape, x_list[i].shape)
+
 
     def _model_test(self, model, data_loader):
         predict = []
