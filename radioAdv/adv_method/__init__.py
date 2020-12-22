@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-06 15:19:08
-LastEditTime: 2020-12-21 17:11:06
+LastEditTime: 2020-12-22 15:57:57
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/__init__.py
@@ -15,8 +15,5 @@ from adv_method.mi_fgsm import *
 from adv_method.ni_fgsm import *
 from adv_method.shifting_mi_fgsm import *
 from adv_method.shifting_noise_extend import *
-from adv_method.last_mi_fgsm import *
-from adv_method.last_ni_fgsm import *
-from adv_method.iter_last_mi_fgsm import *
-from adv_method.iter_last_ni_fgsm import *
+
 from adv_method.shifting_sample import *
