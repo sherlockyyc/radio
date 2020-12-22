@@ -91,7 +91,7 @@ def loadBased_ResNet(filepath):
     Returns:
         [type]: [返回一个预训练的LeNet]
     """
-    checkpoint = torch.load(filepath)
+    checkpoint = torch.load(filepath,map_location='cpu')
     model = Based_ResNet(output_dim = 11)
     model.load_state_dict(checkpoint['state_dict'])  # 加载网络权重参数
     return model

@@ -92,9 +92,11 @@ class Attacker(object):
         #     x = torch.from_numpy(x)
         # if type(y) is not torch.tensor:
         #     y = torch.Tensor(y.float())
-        x = torch.Tensor(x.float()).to(self.device)
-        y = torch.Tensor(y.float()).to(self.device).long()
-
+        # x = torch.Tensor(x.float()).to(self.device)
+        # # print(x[0])
+        # y = torch.Tensor(y.float()).to(self.device).long()
+        x = x.to(self.device).float()
+        y = y.to(self.device).long()
 
         x_advs, pertubations, logits, nowLabels = self.attack_method.attack(
             x, y, x_snr, **getattr(self.config, self.config.CONFIG['attack_name']))
@@ -143,6 +145,7 @@ class Attacker(object):
 
         predict = []
         targets = []
+        now_labels = []
 
         real_sample = []
         adv_sample = []
@@ -162,6 +165,9 @@ class Attacker(object):
             else:
                 data_num +=  x.shape[0]
                 success_num += (y != nowLabels).sum()
+                # print((y == nowLabels).sum())
+                # print(y)
+                # print(nowLabels)
 
             # 统计平均扰动值
             pertubmean.append(np.abs(pertubations).mean())
@@ -178,6 +184,7 @@ class Attacker(object):
             # 保存预测结果
             predict.append(logits)
             targets.append(y)
+            now_labels.append(nowLabels)
 
             # 用来保存信息
             real_sample.append(x)
@@ -191,6 +198,9 @@ class Attacker(object):
                 if np.sum(x_snr== snr) != 0:
                     snr_acc[i] += np.sum(nowLabels[x_snr == snr] == y[x_snr == snr])
                     snr_num[i] += np.sum(x_snr == snr)
+
+        predict = np.hstack(now_labels)
+        targets = np.hstack(targets)
 
         # 记录不同snr下的准确率
         snr_acc = snr_acc / snr_num
@@ -347,7 +357,7 @@ class Attacker(object):
                 pertubation.append(random_pertubation)
             pertubation = np.stack(pertubation)
             adv_sample = real_sample + pertubation
-
+            
         black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
         adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
 
@@ -392,14 +402,16 @@ class Attacker(object):
 
             if k > 0:
                 # 扰动在信号的后面
-                first_noise = first_pertubation[:, :, :, :128 - k]
-                second_noise = second_pertubation[:, :, :, :k]
+                first_noise = first_pertubation[:, :, :, 128 - k: 128]
+                second_noise = second_pertubation[:, :, :, : 128 - k]
                 adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
             elif k < 0:
                 # 扰动在信号的前面
-                first_noise = first_pertubation[:, :, :, : -k]
-                second_noise = second_pertubation[:, :, :, :128 + k]
+                first_noise = first_pertubation[:, :, :, -k : 128]
+                second_noise = second_pertubation[:, :, :, : -k]
                 adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
+            else:
+                adv_pertub_tranfer = first_pertubation
 
             adv_sample_tranfer = real_sample + adv_pertub_tranfer
 
@@ -588,8 +600,8 @@ class Attacker(object):
             x_adv = torch.tensor(x_adv).to(self.device).float()
             y = np.array(y)
 
-            logits = self.model(x_adv).cpu().detach().numpy()
-            total_metrics += self._eval_metrics(logits, y)
+            logits = model(x_adv).cpu().detach().numpy()
+            
 
             predict.append(logits)
             targets.append(y)
@@ -607,11 +619,12 @@ class Attacker(object):
 
         predict = np.vstack(predict)
         targets = np.hstack(targets)
+        total_metrics += self._eval_metrics(predict, targets)
         # self.plot_confusion_matrix_figure(self.figure_dir, predict, targets, self.mods)
         
         log = {}
         for i,metric in enumerate(self.metrics):
-            log[metric.__name__] = total_metrics[i]/len(data_loader)
+            log[metric.__name__] = total_metrics[i]
         
         log['snr_acc'] = snr_acc
 
@@ -640,8 +653,43 @@ class Attacker(object):
         data = np.vstack(data)
         labels = np.hstack(labels)
         snrs = np.hstack(snrs)
-        dirname = '/home/yuzhen/wireless/RML2016.10a'
+        dirname = '/home/baiding/Study/research/radio'
+        print(dirname)
         print('-----还有{}数据'.format(len(data)))
+        pickle.dump([data, labels, snrs], open(os.path.join(dirname, 'attack_data.p'), 'wb'))
+        print('-----已完成数据存储-----')
+
+    def pick_data(self, data_loader):
+        """[从数据集中挑选部分数据集]
+
+        Args:
+            data_loader ([type]): [description]
+        """
+        sample_matrix = np.ones((11, 10)) * 20
+        data = []
+        labels = []
+        snrs = []
+        for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
+            x = np.array(x)
+            y = np.array(y)
+            x_snr = np.array(x_snr)
+            index = x_snr>= 0
+            after_snr_x = x[index]
+            after_snr_y = y[index]
+            after_snr_snr = x_snr[index]
+            for (one_x, one_y, one_x_snr) in zip(after_snr_x, after_snr_y, after_snr_snr):
+                if sample_matrix[one_y, one_x_snr//2] > 0:
+                    sample_matrix[one_y, one_x_snr//2] -= 1
+                    data.append(one_x)
+                    labels.append(one_y)
+                    snrs.append(one_x_snr)
+            if np.max(sample_matrix) == 0:
+                break
+        data = np.stack(data)
+        labels = np.array(labels)
+        snrs = np.array(snrs)
+        print('-----生成了{}个数据'.format(len(data)))
+        dirname = '/home/baiding/Study/research/radio'
         pickle.dump([data, labels, snrs], open(os.path.join(dirname, 'attack_data.p'), 'wb'))
         print('-----已完成数据存储-----')
 

@@ -1,3 +1,11 @@
+'''
+Author: your name
+Date: 2020-12-06 15:34:01
+LastEditTime: 2020-12-21 19:03:47
+LastEditors: your name
+Description: In User Settings Edit
+FilePath: /radioAdv/model_loader/based_lstm.py
+'''
 import numpy as np
 import torch
 import torch.nn as nn
@@ -54,7 +62,7 @@ def loadBased_LSTM(filepath):
     Returns:
         [type]: [返回一个预训练的LeNet]
     """
-    checkpoint = torch.load(filepath)
+    checkpoint = torch.load(filepath,map_location='cpu')
     model = Based_LSTM(output_dim = 11)
     model.load_state_dict(checkpoint['state_dict'])  # 加载网络权重参数
     return model

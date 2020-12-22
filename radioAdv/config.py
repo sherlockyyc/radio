@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'Shifting_Noise_Extend',       #设定攻击方法的名称
+            attack_name = 'Shifting_Sample',       #设定攻击方法的名称
         )
 
 
@@ -26,22 +26,22 @@ class Config(object):
         #################################################模型选择
         ##########################模型参数
         self.VTCNN2 = dict(
-            filepath = '/home/baiding/Study/research/radio/log/VTCNN2/model/VTCNN2_Epoch85.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/VTCNN2/VTCNN2_Epoch85.pkl'
         )
         self.Based_GRU = dict(
-            filepath = '/home/baiding/Study/research/radio/log/Based_GRU/model/Based_GRU_Epoch1260.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/Based_GRU/Based_GRU_Epoch1260.pkl'
         )
         self.Based_LSTM = dict(
             filepath = ''
         )
         self.Based_VGG = dict(
-            filepath = '/home/baiding/Study/research/radio/log/Based_VGG/modelBased_VGG_Epoch1160.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/Based_VGG/Based_VGG_Epoch1160.pkl'
         )
         self.Based_ResNet = dict(
-            filepath = '/home/baiding/Study/research/radio/log/Based_ResNet/model/Based_ResNet_Epoch1160.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
         )
         self.CLDNN = dict(
-            filepath = '/home/baiding/Study/research/radio/log/CLDNN_GRU3/model/CLDNN_Epoch1160.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
         )
         # self.VTCNN2 = dict(
         #     filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
@@ -89,7 +89,7 @@ class Config(object):
         #################################################攻击方法
         ##########################FGSM方法
         self.FGSM = dict(
-            eps = 3e-3,                  #FGSM的控制大小的参数
+            eps = 3*1e-3,                  #FGSM的控制大小的参数
             is_target = False,           #控制攻击方式，目标攻击、无目标攻击
             target = 3,               #目标攻击的目标
         )
@@ -113,7 +113,7 @@ class Config(object):
         )
         ## MI-FGSM
         self.MI_FGSM = dict(
-            eps = 1*1e-4,                # 控制大小的参数
+            eps = 1e-4,                # 控制大小的参数
             epoch = 30,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
@@ -127,6 +127,39 @@ class Config(object):
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
         )
+        ## Last_MI-FGSM
+        self.Last_MI_FGSM = dict(
+            eps = 1e-3,                # 控制大小的参数
+            epoch = 30,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+        )
+        ## Last_NI-FGSM
+        self.Last_NI_FGSM = dict(
+            eps = 1e-3,                # 控制大小的参数
+            epoch = 30,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+        )
+        ## Iter_Last_MI-FGSM
+        self.Iter_Last_MI_FGSM = dict(
+            eps = 1e-4,                # 控制大小的参数
+            epoch = 10,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+        )
+        ## Iter_Last_NI-FGSM
+        self.Iter_Last_NI_FGSM = dict(
+            eps = 1e-4,                # 控制大小的参数
+            epoch = 30,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+        )
+
         ## Shifting_MI-FGSM
         self.Shifting_MI_FGSM = dict(
             eps = 1e-4,                # 控制大小的参数
@@ -136,12 +169,21 @@ class Config(object):
             mu = 1,                     # momentum参数
         )
         self.Shifting_Noise_Extend = dict(
+            eps = 2e-4,                # 控制大小的参数
+            epoch = 10,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+            shift = 10,                 # 在两边扩充noise, 20 + noise + 20
+        )
+        self.Shifting_Sample = dict(
             eps = 1e-4,                # 控制大小的参数
             epoch = 30,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
-            shift = 20,                 # 在两边扩充noise, 20 + noise + 20
+            shift = 32,                 # 在两边扩充noise, 20 + noise + 20
+            sample_num = 64,             # 采样点
         )
 
         #################################################log
@@ -154,7 +196,7 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'Shifting_Attack_Average',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack', 'White_Attack_Average', 'Black_Attack_Average', 'Shifting_Attack_Average']
+            method = 'Shifting_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack', 'White_Attack_Average', 'Black_Attack_Average', 'Shifting_Attack_Average']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',

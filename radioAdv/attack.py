@@ -1,3 +1,11 @@
+'''
+Author: your name
+Date: 2020-12-07 15:03:08
+LastEditTime: 2020-12-21 20:31:57
+LastEditors: Please set LastEditors
+Description: In User Settings Edit
+FilePath: /radioAdv/attack.py
+'''
 import adv_method
 import data_loader
 import model_loader
@@ -13,6 +21,7 @@ import os
 
 
 ######################################加载配置
+setup_seed(2020)
 config = Config()
 Log = config.log_output()
 
@@ -21,10 +30,11 @@ dataset_name = config.CONFIG['dataset_name']
 attack_set = getattr(data_loader, dataset_name + 'AttackSet')(**getattr(config, dataset_name))
 # test_set = getattr(data_loader, dataset_name + 'TestSet')(**getattr(config, dataset_name))
 snrs, mods = attack_set.get_snr_and_mod()  
+# snrs, mods = test_set.get_snr_and_mod()
 
 ######################################加载数据加载器
 attack_loader = DataLoader(attack_set, batch_size = 32, shuffle = False, num_workers = 4)
-# test_loader = DataLoader(test_set, batch_size = 32, shuffle = False, num_workers = 1)
+# test_loader = DataLoader(test_set, batch_size = 32, shuffle = True, num_workers = 1)
 
 ######################################加载模型
 model_name = config.CONFIG['model_name']
@@ -80,3 +90,5 @@ for key, value in Log.items():
 # dirname = '/home/yuzhen/wireless/RML2016.10a'
 # attack_x, attack_y, attack_snr = pickle.load(open(os.path.join(dirname, 'attack_data.p'), 'rb'))
 # print(len(attack_x))
+
+# attacker.pick_data(test_loader)

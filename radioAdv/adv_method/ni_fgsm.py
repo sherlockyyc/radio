@@ -35,7 +35,7 @@ class NI_FGSM(BaseMethod):
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
-        self.model.train()
+        self.model.eval()
         if is_target:
             x_adv,pertubation = self._attackWithTarget(x, target, epoch, eps, mu)
             message = "At present, we haven't implemented the Target attack algorithm "

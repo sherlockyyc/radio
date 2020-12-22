@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-19 13:00:55
-LastEditTime: 2020-12-19 13:29:19
+LastEditTime: 2020-12-21 23:09:20
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_noise.py
@@ -46,7 +46,7 @@ class Shifting_Noise_Extend(BaseMethod):
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
-        self.model.train()
+        self.model.eval()
         if is_target:
             x_adv,pertubation = self._attackWithTarget(x, x_snr, target, epoch, eps, mu, shift)
             message = "At present, we haven't implemented the Target attack algorithm "
@@ -72,32 +72,13 @@ class Shifting_Noise_Extend(BaseMethod):
         shape[-1] = shape[-1] + shift * 2       # 在Noise两侧扩充shift
         pertubation = torch.Tensor(np.random.uniform(-eps, eps, shape)).to(self.device)      # 噪声初始化
 
-        # dirname = './tmp_parameters'
-        # parameter_name = 'Shifting_Noise_Extend_Pertubation_1.p'
-
-        
-        # if not os.path.exists(os.path.join(dirname, parameter_name)):
-        #     x_list = []
-        #     y_list = []
-        #     x_snr_list = []
-        #     pretubation_mean_list = []
-        #     pretubation_list_list = []
-        # else:
-        #     x_list, y_list, x_snr_list, pretubation_list_list = pickle.load(open(os.path.join(dirname, parameter_name), 'rb'))
-        
-        # for shift in range(128):
-        #     mask_shifting = np.ones(x.shape)
-        #     mask_shifting[:,:,:,:shift] = 0
-        #     mask_shifting = torch.tensor(mask_shifting).to(self.device)
-
-        #     x_adv = x + torch.Tensor(np.random.uniform(-eps, eps, x.shape)).type_as(x) * mask_shifting
-
         g = 0
         x_adv = x
         for i in range(epoch):
             random_shift = np.random.randint(0, 2*shift + 1)
             random_pertubation = pertubation[:, :, :, random_shift : random_shift + 128]
-            x_adv = x_adv.detach() + random_pertubation
+            # x_adv = x_adv.detach() + random_pertubation
+            x_adv = x.detach() + random_pertubation
             
             x_adv.requires_grad = True
             logits = self.model(x_adv.float())
@@ -124,6 +105,9 @@ class Shifting_Noise_Extend(BaseMethod):
         x_adv = np.stack(x_adv.detach().cpu().numpy())
 
         pertubation = pertubation.detach().cpu().numpy()
+        # tmp = pertubation[:shift]
+        # pertubation[:shift] = pertubation[-shift:]
+        # pertubation[-shift:] = tmp
 
         return x_adv, pertubation
 
