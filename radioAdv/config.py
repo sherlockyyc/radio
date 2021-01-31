@@ -25,42 +25,42 @@ class Config(object):
 
         #################################################模型选择
         ##########################模型参数
-        self.VTCNN2 = dict(
-            filepath = '/home/baiding/Study/research/radio/model/VTCNN2/VTCNN2_Epoch85.pkl'
-        )
-        self.Based_GRU = dict(
-            filepath = '/home/baiding/Study/research/radio/model/Based_GRU/Based_GRU_Epoch1260.pkl'
-        )
-        self.Based_LSTM = dict(
-            filepath = ''
-        )
-        self.Based_VGG = dict(
-            filepath = '/home/baiding/Study/research/radio/model/Based_VGG/Based_VGG_Epoch1160.pkl'
-        )
-        self.Based_ResNet = dict(
-            filepath = '/home/baiding/Study/research/radio/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
-        )
-        self.CLDNN = dict(
-            filepath = '/home/baiding/Study/research/radio/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
-        )
         # self.VTCNN2 = dict(
-        #     filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
+        #     filepath = '/home/baiding/Study/research/radio/model/VTCNN2/VTCNN2_Epoch85.pkl'
         # )
         # self.Based_GRU = dict(
-        #     filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
+        #     filepath = '/home/baiding/Study/research/radio/model/Based_GRU/Based_GRU_Epoch1260.pkl'
         # )
         # self.Based_LSTM = dict(
         #     filepath = ''
         # )
         # self.Based_VGG = dict(
-        #     filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Epoch1160.pkl'
+        #     filepath = '/home/baiding/Study/research/radio/model/Based_VGG/Based_VGG_Epoch1160.pkl'
         # )
         # self.Based_ResNet = dict(
-        #     filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
+        #     filepath = '/home/baiding/Study/research/radio/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
         # )
         # self.CLDNN = dict(
-        #     filepath = '/home/yuzhen/wireless/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
+        #     filepath = '/home/baiding/Study/research/radio/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
         # )
+        self.VTCNN2 = dict(
+            filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
+        )
+        self.Based_GRU = dict(
+            filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
+        )
+        self.Based_LSTM = dict(
+            filepath = ''
+        )
+        self.Based_VGG = dict(
+            filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Epoch1160.pkl'
+        )
+        self.Based_ResNet = dict(
+            filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
+        )
+        self.CLDNN = dict(
+            filepath = '/home/yuzhen/wireless/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
+        )
 
 
 
@@ -75,14 +75,14 @@ class Config(object):
             dirname = '/home/baiding/Desktop/Study/Deep/datasets/MNIST/raw',            #MNIST数据集存放的文件夹
             is_vector = False,         #False表示得到784维向量数据，True表示得到28*28的图片数据
         )
-        self.Rml2016_10a = dict(
-            dirname = "/home/baiding/Study/research/radio/RML2016.10a",  # 数据集文件路径
-            prop = 0.8,                     # 所占的比例
-        )
         # self.Rml2016_10a = dict(
-        #     dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
+        #     dirname = "/home/baiding/Study/research/radio/RML2016.10a",  # 数据集文件路径
         #     prop = 0.8,                     # 所占的比例
         # )
+        self.Rml2016_10a = dict(
+            dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
+            prop = 0.8,                     # 所占的比例
+        )
 
 
 
@@ -178,12 +178,12 @@ class Config(object):
         )
         self.Shifting_Sample = dict(
             eps = 1e-4,                # 控制大小的参数
-            epoch = 30,                 # 迭代次数
+            epoch = 40,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
-            shift = 32,                 # 在两边扩充noise, 20 + noise + 20
-            sample_num = 64,             # 采样点
+            shift = 8,                 # 在两边扩充noise, 20 + noise + 20
+            sample_num = 128,             # 采样点
         )
 
         #################################################log
@@ -196,16 +196,20 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'Shifting_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack', 'White_Attack_Average', 'Black_Attack_Average', 'Shifting_Attack_Average']
+            method = 'Shifting_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
             black_model = 'Based_GRU',
+            is_uap = False,
+            eps = 0.003,
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
             parameter_path = './tmp_parameters/shifting_pertubation_1.p',   #
-            shift_k = 64
+            shift_k = 64,
+            is_uap = False,
+            eps = 0.003,
         )
 
     def log_output(self):

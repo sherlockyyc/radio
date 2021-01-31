@@ -232,24 +232,13 @@ class Attacker(object):
         if attack_method == 'White_Attack':
             log = self.white_attack(data_loader)
         elif attack_method == 'Black_Attack':
-            threat_model = self.config.Black_Attack['threat_model']
-            black_model = self.config.Black_Attack['black_model']
-            log = self.black_attack(data_loader, threat_model, black_model)
+            # threat_model = self.config.Black_Attack['threat_model']
+            # black_model = self.config.Black_Attack['black_model']
+            log = self.black_attack(data_loader, **getattr(self.config, attack_method))
         elif attack_method == 'Shifting_Attack':
             threat_model = self.config.Black_Attack['threat_model']
             black_model = self.config.Black_Attack['black_model']
             log = self.shifting_attack(data_loader, threat_model, black_model, **getattr(self.config, attack_method))
-
-        elif attack_method == 'White_Attack_Average':
-            log = self.white_attack_average(data_loader)
-        elif attack_method == 'Black_Attack_Average':
-            threat_model = self.config.Black_Attack['threat_model']
-            black_model = self.config.Black_Attack['black_model']
-            log = self.black_attack_average(data_loader, threat_model, black_model)
-        elif attack_method == 'Shifting_Attack_Average':
-            threat_model = self.config.Black_Attack['threat_model']
-            black_model = self.config.Black_Attack['black_model']
-            log = self.shifting_attack_average(data_loader, threat_model, black_model, **getattr(self.config, 'Shifting_Attack'))
 
 
         return log
@@ -259,13 +248,15 @@ class Attacker(object):
         return log
 
 
-    def black_attack(self, data_loader, threat_model, black_model):
+    def black_attack(self, data_loader, threat_model, black_model, is_uap, eps):
         """[对一个模型进行黑盒攻击]
 
         Args:
             data_loader ([DataLoader]): [数据加载器]
             threat_model ([Model]): [用于生成对抗样本的白盒模型]
             black_model ([Model]): [用于攻击的黑盒模型]
+            is_uap ([bool]): [是否进行UAP攻击， True进行UAP攻击]
+            eps ([float]): [UAP的eps大小]
 
         Returns:
             acc [float]: [攻击后的准确率]
@@ -279,6 +270,13 @@ class Attacker(object):
         for key, value in white_log.items():
             log['White_model   '+key] = value
 
+        if is_uap:
+            univeral_pertub = UAP(adv_pertub, eps)
+            univeral_pertub = np.expand_dims(univeral_pertub, axis=0)
+            adv_pertub = np.tile(univeral_pertub, (adv_pertub.shape[0],1,1,1))
+            adv_sample = real_sample + adv_pertub
+            pertub_mean = np.mean(np.abs(adv_pertub))
+            log['UAP pertub_mean'] = pertub_mean
 
         torch.cuda.empty_cache()
 
@@ -308,13 +306,15 @@ class Attacker(object):
 
         return log
 
-    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k):
+    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k, is_uap, eps):
         """[对一个模型进行噪声偏移的攻击]
 
         Args:
             data_loader ([DataLoader]): [数据加载器]
             threat_model ([Model]): [用于生成对抗样本的白盒模型]
             black_model ([Model]): [用于攻击的黑盒模型]
+            is_uap ([bool]): [是否进行UAP攻击， True进行UAP攻击]
+            eps ([float]): [UAP的eps大小]
 
         Returns:
             acc [float]: [攻击后的准确率]
@@ -333,6 +333,14 @@ class Attacker(object):
             shift_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
             shift_loader = DataLoader(shift_dataset, batch_size = 32, shuffle = False, num_workers = 4)
             white_log = self._model_test(white_model, shift_loader)
+
+        if is_uap:
+            univeral_pertub = UAP(adv_pertub, eps)
+            univeral_pertub = np.expand_dims(univeral_pertub, axis=0)
+            adv_pertub = np.tile(univeral_pertub, (adv_pertub.shape[0],1,1,1))
+            adv_sample = real_sample + adv_pertub
+            pertub_mean = np.mean(np.abs(adv_pertub))
+            log['UAP pertub_mean'] = pertub_mean
 
         pertub_mean = np.mean(np.abs(adv_pertub))
         log['pertub_mean'] = pertub_mean
@@ -431,111 +439,7 @@ class Attacker(object):
 
         return log
 
-    def white_attack_average(self, data_loader):
-        # 该函数仅针对Shifting_Noise_Extend,由于其随机性，计算其平均成功率
-        log = {}
-        acc_average = 0
-        pertubmean_average = 0
-        pertub_prop_average = 0
-        pertub_max_average = 0
-        snr_acc_average = np.zeros(10)
-        for i in range(10):
-            print('第{}次白盒攻击，开始--------------'.format(i))
-            attack_log = self.white_attack(data_loader)
 
-            acc_average += attack_log['acc']
-            pertubmean_average += attack_log['pertubmean']
-            pertub_prop_average += attack_log['pertub_prop']
-            pertub_max_average += attack_log['pertub_max']
-            snr_acc_average += np.array(attack_log['snr_acc'])
-
-        log['acc_average'] = acc_average/10
-        log['pertubmean_average'] = pertubmean_average/10
-        log['pertub_prop_average'] = pertub_prop_average/10
-        log['pertub_max_average'] = pertub_max_average/10
-        log['snr_acc_average'] = snr_acc_average/10
-        return log
-
-    def black_attack_average(self, data_loader, threat_model, black_model):
-        # 该函数仅针对Shifting_Noise_Extend,由于其随机性，计算其平均成功率
-        log = {}
-        white_acc_average = 0
-        white_pertubmean_average = 0
-        white_pertub_prop_average = 0
-        white_pertub_max_average = 0
-        white_snr_acc_average = np.zeros(10)
-
-        black_acc_average = 0
-        black_snr_acc_average = np.zeros(10)
-
-        for i in range(10):
-            print('第{}次黑盒攻击，开始--------------'.format(i))
-            attack_log = self.black_attack(data_loader, threat_model, black_model)
-            
-            white_acc_average += attack_log['White_model   acc']
-            white_pertubmean_average += attack_log['White_model   pertubmean']
-            white_pertub_prop_average += attack_log['White_model   pertub_prop']
-            white_pertub_max_average += attack_log['White_model   pertub_max']
-            white_snr_acc_average += np.array(attack_log['White_model   snr_acc'])
-
-            black_acc_average += attack_log['Black_model   accuracy']
-            black_snr_acc_average += np.array(attack_log['Black_model   snr_acc'])
-
-
-        log['White_model   acc_average'] = white_acc_average/10
-        log['White_model   pertubmean_average'] = white_pertubmean_average/10
-        log['White_model   pertub_prop_average'] = white_pertub_prop_average/10
-        log['White_model   pertub_max_average'] = white_pertub_max_average/10
-        log['White_model   snr_acc_average'] = white_pertub_max_average/10
-
-        log['Black_model   acc_average'] = black_acc_average/10
-        log['Black_model   snr_acc_average'] = black_snr_acc_average/10
-        return log
-
-    def shifting_attack_average(self, data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k):
-        # 该函数仅针对Shifting_Noise_Extend,由于其随机性，计算其平均成功率
-        log = {}
-        white_acc_average = 0
-        white_pertubmean_average = 0
-        white_pertub_prop_average = 0
-        white_pertub_max_average = 0
-        white_snr_acc_average = np.zeros(10)
-
-        black_acc_average = 0
-        black_snr_acc_average = np.zeros(10)
-
-        shift_acc_average = 0
-        shift_snr_acc_average = np.zeros(10)
-        for i in range(10):
-            print('第{}次平移攻击，开始--------------'.format(i))
-            attack_log = self.shifting_attack(data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k)
-            
-            white_acc_average += attack_log['White_model   acc']
-            white_pertubmean_average += attack_log['White_model   pertubmean']
-            white_pertub_prop_average += attack_log['White_model   pertub_prop']
-            white_pertub_max_average += attack_log['White_model   pertub_max']
-            white_snr_acc_average += np.array(attack_log['White_model   snr_acc'])
-
-            black_acc_average += attack_log['Black_model   accuracy']
-            black_snr_acc_average += np.array(attack_log['Black_model   snr_acc'])
-
-            shift_acc_average += attack_log['shifting_acc']
-            shift_snr_acc_average += np.array(attack_log['shifting_snr_acc'])
-
-
-        log['White_model   acc_average'] = white_acc_average/10
-        log['White_model   pertubmean_average'] = white_pertubmean_average/10
-        log['White_model   pertub_prop_average'] = white_pertub_prop_average/10
-        log['White_model   pertub_max_average'] = white_pertub_max_average/10
-        log['White_model   snr_acc_average'] = white_snr_acc_average/10
-
-        log['Black_model   acc_average'] = black_acc_average/10
-        log['Black_model   snr_acc_average'] = black_snr_acc_average/10
-
-        log['Shifting_model   acc_average'] = shift_acc_average/10
-        log['Shifting_model   snr_acc_average'] = shift_snr_acc_average/10
-        return log
-        
 
     def load_pertub_parameter(self, parameter_path):
         if not os.path.exists(parameter_path):
@@ -761,4 +665,56 @@ class Attacker(object):
         for i,metric in enumerate(self.metrics):
             acc_metrics[i] = metric(logits,targets)
         return acc_metrics
-        
+
+
+def normalization(data):
+    _range = np.max(data) - np.min(data)
+    return (data - np.min(data)) / _range
+ 
+ 
+def standardization(data):
+    mu = np.mean(data, axis=0)
+    sigma = np.std(data, axis=0)
+    return (data - mu) / sigma
+
+def PCA(XMat, k):
+    """[PCA降维]
+
+    Args:
+        XMat ([2d array]):[第一维是特征，第二维是样本数，维度为(m, n)]
+        k ([int]):[降维后的特征数目]
+    
+    Returns:
+        finalData ([2d array]): [降维后的数据，维度为(k, n)]
+        reconData ([2d array]): []
+    """
+    average = np.mean(XMat,axis=0)
+    norm_x = XMat - average
+    # 计算协方差矩阵
+    covX = np.cov(XMat.T)
+    #求解协方差矩阵的特征值和特征向量
+    featValue, featVec=  np.linalg.eig(covX)
+    #按照featValue进行从大到小排序
+    index = np.argsort(-featValue)
+    #注意特征向量时列向量，而numpy的二维矩阵(数组)a[m][n]中，a[1]表示第1行值
+    selectVec = np.matrix(featVec.T[index[:k]]) #所以这里需要进行转置
+    finalData = norm_x * selectVec.T 
+    # reconData = (finalData * selectVec) + average     # 移动坐标轴之后的矩阵
+    return finalData
+
+def UAP(pertubation, eps):
+    """[UAP攻击]
+
+    Args:
+        pertubation ([多维array]): [白盒攻击后的对抗扰动值]
+        eps ([float]):  [控制扰动生成的eps大小]
+    
+    Returns:
+        univeral_pertub ([多维array]):[UAP生成的通用扰动，比pertubation少了第一维度]
+    """
+    shape = pertubation.shape
+    reshape_pertubation = pertubation.reshape(shape[0], -1).T
+    univeral_pertub = PCA(reshape_pertubation, 1)
+    univeral_pertub = univeral_pertub.reshape(*shape[1:])
+    univeral_pertub = 2*eps * normalization(univeral_pertub)
+    return univeral_pertub
