@@ -23,7 +23,7 @@ class DeepFool(BaseMethod):
         """
         super(DeepFool,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, max_iter=10, is_target=False, target=0):
+    def attack(self, x, y=0, x_snr=[], max_iter=10, is_target=False, target=0):
         """[summary]
 
         Args:
@@ -38,6 +38,7 @@ class DeepFool(BaseMethod):
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
+        self.model.eval()
         if is_target:
             x_adv,pertubation = self._attackWithTarget(x, target)
             message = "At present, we haven't implemented the Target attack algorithm "
@@ -49,6 +50,7 @@ class DeepFool(BaseMethod):
 
         logits = self.model(x_adv).cpu().detach().numpy()
         pred = logits.argmax(1)
+
 
         x_adv = x_adv.cpu().detach().numpy()
         pertubation = pertubation.cpu().detach().numpy()
@@ -80,8 +82,8 @@ class DeepFool(BaseMethod):
                 pred_origin = pred[classes_origin]
                 grad_origin = torch.autograd.grad(pred_origin, x_adv, retain_graph= True, create_graph= True)[0]
                 # 一旦标签发生变化，退出迭代过程
-                if classes_now != classes_origin:
-                    break
+                # if classes_now != classes_origin:
+                #     break
                 # 
                 l = classes_origin
                 l_value = np.inf
@@ -103,7 +105,7 @@ class DeepFool(BaseMethod):
                 r = (1+0.02)*l_value * l_w
                 x_adv = x_adv + r
                 x_adv = x_adv.detach()
-                x_adv = torch.clamp(x_adv, 0, 1)
+                # x_adv = torch.clamp(x_adv, 0, 1)
                 
 
             pertubation = x_adv - image

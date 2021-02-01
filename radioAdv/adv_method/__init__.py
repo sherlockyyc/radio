@@ -13,7 +13,4 @@ from adv_method.pgd import *
 from adv_method.jsma import *
 from adv_method.mi_fgsm import *
 from adv_method.ni_fgsm import *
-from adv_method.shifting_mi_fgsm import *
-from adv_method.shifting_noise_extend import *
-
-from adv_method.shifting_sample import *
+from adv_method.pim import *
