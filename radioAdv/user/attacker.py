@@ -355,16 +355,6 @@ class Attacker(object):
         model_name = self.config.Black_Attack['black_model']
         black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
 
-        # 对Shifting_Noise_Extend攻击方式的噪声进行特殊处理，对每一个扰动，都进行随机的选择
-        if self.config.CONFIG['attack_name'] == 'Shifting_Noise_Extend':
-            pertubation = []
-            shift = self.config.Shifting_Noise_Extend['shift']
-            for i in range(adv_pertub.shape[0]):
-                random_shift = np.random.randint(0, 2*shift + 1)
-                random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
-                pertubation.append(random_pertubation)
-            pertubation = np.stack(pertubation)
-            adv_sample = real_sample + pertubation
             
         black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
         adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
@@ -387,26 +377,8 @@ class Attacker(object):
         snr_acc = np.zeros(len(self.snrs))
         shift_acc_list = []
         for k in tqdm(range(-shift_k, shift_k+1, 1)):
-            # 对Shifting_Noise_Extend攻击方式的噪声进行特殊处理，对每一个扰动，都进行随机的选择
-            if self.config.CONFIG['attack_name'] == 'Shifting_Noise_Extend':
-                shift = self.config.Shifting_Noise_Extend['shift']
-
-                first_pertubation = []          # 第一次发射的扰动
-                second_pertubation = []         # 第二次发射的扰动
-                for i in range(adv_pertub.shape[0]):
-                    random_shift = np.random.randint(0, 2*shift + 1)
-                    random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
-                    first_pertubation.append(random_pertubation)
-
-                    random_shift = np.random.randint(0, 2*shift + 1)
-                    random_pertubation = adv_pertub[i, :, :, random_shift : random_shift + 128]
-                    second_pertubation.append(random_pertubation)
-                first_pertubation = np.stack(pertubation)
-                second_pertubation = np.stack(pertubation)
-            
-            else:
-                first_pertubation = adv_pertub.copy()
-                second_pertubation = adv_pertub.copy()
+            first_pertubation = adv_pertub.copy()
+            second_pertubation = adv_pertub.copy()
 
             if k > 0:
                 # 扰动在信号的后面
@@ -439,7 +411,14 @@ class Attacker(object):
 
         return log
 
-
+    def adversarial_training_dataset_generating(self, data_loader):
+        log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(self.model, data_loader)
+        train_x, train_y, train_snr = pickle.load(open(os.path.join(dirname, 'train_data.p'), 'rb'))
+        adv_training_x = np.vstack([train_x, adv_sample])
+        adv_training_y = np.vstack([train_y, adv_sample])
+        adv_training_snr = np.hstack([train_snr, x_snrs])
+        pickle.dump([adv_training_x, adv_training_y, adv_training_snr], open(os.path.join(dirname, 'adv_training_data.p'), 'wb'))
+        print('adv_training_data.p generate successfully')
 
     def load_pertub_parameter(self, parameter_path):
         if not os.path.exists(parameter_path):

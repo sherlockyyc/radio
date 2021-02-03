@@ -29,12 +29,14 @@ Log = config.log_output()
 dataset_name = config.CONFIG['dataset_name']
 attack_set = getattr(data_loader, dataset_name + 'AttackSet')(**getattr(config, dataset_name))
 # test_set = getattr(data_loader, dataset_name + 'TestSet')(**getattr(config, dataset_name))
+train_set = getattr(data_loader, dataset_name + 'TrainSet')(**getattr(config, dataset_name))
 snrs, mods = attack_set.get_snr_and_mod()  
 # snrs, mods = test_set.get_snr_and_mod()
 
 ######################################加载数据加载器
 attack_loader = DataLoader(attack_set, batch_size = 32, shuffle = False, num_workers = 4)
 # test_loader = DataLoader(test_set, batch_size = 32, shuffle = True, num_workers = 1)
+train_loader = DataLoader(train_set, batch_size = 32, shuffle = True, num_workers = 1)
 
 ######################################加载模型
 model_name = config.CONFIG['model_name']
@@ -66,18 +68,19 @@ attacker = Attacker(model, metrics, criterion, config, attack_method, snrs, mods
 ###############################攻击整个数据集
 # attack_log = attacker.attack_set(test_loader)
 # Log['attack_log'] = attack_log
-log = attacker.start_attack(attack_loader)
-Log.update(log)
+# log = attacker.start_attack(attack_loader)
+# Log.update(log)
 
-####################################log保存
-filename = os.path.join(config.Checkpoint['log_dir'], config.Checkpoint['log_filename'])
-f = open(filename,'w')
+# ####################################log保存
+# filename = os.path.join(config.Checkpoint['log_dir'], config.Checkpoint['log_filename'])
+# f = open(filename,'w')
 
-for key, value in Log.items():
-    print('    {:15s}: {}'.format(str(key), value))
-    log = {}
-    log[key] = value
-    log_write(f, log)
+# for key, value in Log.items():
+#     print('    {:15s}: {}'.format(str(key), value))
+#     log = {}
+#     log[key] = value
+#     log_write(f, log)
+attacker.adversarial_training_dataset_generating(train_loader)
 
 
 # # plt.switch_backend('agg')
