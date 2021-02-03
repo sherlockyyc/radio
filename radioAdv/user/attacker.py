@@ -198,6 +198,8 @@ class Attacker(object):
                 if np.sum(x_snr== snr) != 0:
                     snr_acc[i] += np.sum(nowLabels[x_snr == snr] == y[x_snr == snr])
                     snr_num[i] += np.sum(x_snr == snr)
+            if idx > 1:
+                break
 
         predict = np.hstack(now_labels)
         targets = np.hstack(targets)
@@ -411,11 +413,11 @@ class Attacker(object):
 
         return log
 
-    def adversarial_training_dataset_generating(self, data_loader):
+    def adversarial_training_dataset_generating(self, data_loader, dirname):
         log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(self.model, data_loader)
         train_x, train_y, train_snr = pickle.load(open(os.path.join(dirname, 'train_data.p'), 'rb'))
         adv_training_x = np.vstack([train_x, adv_sample])
-        adv_training_y = np.vstack([train_y, adv_sample])
+        adv_training_y = np.hstack([train_y, targets])
         adv_training_snr = np.hstack([train_snr, x_snrs])
         pickle.dump([adv_training_x, adv_training_y, adv_training_snr], open(os.path.join(dirname, 'adv_training_data.p'), 'wb'))
         print('adv_training_data.p generate successfully')

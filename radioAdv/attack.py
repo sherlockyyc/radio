@@ -80,7 +80,8 @@ attacker = Attacker(model, metrics, criterion, config, attack_method, snrs, mods
 #     log = {}
 #     log[key] = value
 #     log_write(f, log)
-attacker.adversarial_training_dataset_generating(train_loader)
+dirname = '/home/yuzhen/wireless/RML2016.10a'
+attacker.adversarial_training_dataset_generating(train_loader, dirname)
 
 
 # # plt.switch_backend('agg')
