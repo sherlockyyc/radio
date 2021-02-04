@@ -199,8 +199,6 @@ class Attacker(object):
                 if np.sum(x_snr== snr) != 0:
                     snr_acc[i] += np.sum(nowLabels[x_snr == snr] == y[x_snr == snr])
                     snr_num[i] += np.sum(x_snr == snr)
-            if idx > 1:
-                break
 
         predict = np.hstack(now_labels)
         targets = np.hstack(targets)
