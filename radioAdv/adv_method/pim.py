@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-21 16:56:20
-LastEditTime: 2020-12-21 21:53:09
+LastEditTime: 2021-02-04 19:26:10
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_sample.py
@@ -43,7 +43,7 @@ class PIM(BaseMethod):
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
-        self.model.eval()
+        self.model.train()
         if is_target:
             x_adv,pertubation = self._attackWithTarget(x, target, epoch, eps, mu, shift, sample_num )
             message = "At present, we haven't implemented the Target attack algorithm "

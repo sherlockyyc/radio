@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-07 15:03:08
-LastEditTime: 2020-12-21 20:31:57
+LastEditTime: 2021-02-04 19:26:48
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/attack.py
@@ -68,20 +68,20 @@ attacker = Attacker(model, metrics, criterion, config, attack_method, snrs, mods
 ###############################攻击整个数据集
 # attack_log = attacker.attack_set(test_loader)
 # Log['attack_log'] = attack_log
-# log = attacker.start_attack(attack_loader)
-# Log.update(log)
+log = attacker.start_attack(attack_loader)
+Log.update(log)
 
-# ####################################log保存
-# filename = os.path.join(config.Checkpoint['log_dir'], config.Checkpoint['log_filename'])
-# f = open(filename,'w')
+####################################log保存
+filename = os.path.join(config.Checkpoint['log_dir'], config.Checkpoint['log_filename'])
+f = open(filename,'w')
 
-# for key, value in Log.items():
-#     print('    {:15s}: {}'.format(str(key), value))
-#     log = {}
-#     log[key] = value
-#     log_write(f, log)
-dirname = '/home/yuzhen/wireless/RML2016.10a'
-attacker.adversarial_training_dataset_generating(train_loader, dirname)
+for key, value in Log.items():
+    print('    {:15s}: {}'.format(str(key), value))
+    log = {}
+    log[key] = value
+    log_write(f, log)
+# dirname = '/home/yuzhen/wireless/RML2016.10a'
+# attacker.adversarial_training_dataset_generating(train_loader, dirname)
 
 
 # # plt.switch_backend('agg')

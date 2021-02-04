@@ -102,3 +102,6 @@ class BaseMethod(object):
         jacobian = torch.zeros(num_classes, *x.shape)
         # 构建梯度输出的mask
         grad_output = torch.zeros(*logits.shape)
+
+    def reset_model(self, model):
+        self.model = model

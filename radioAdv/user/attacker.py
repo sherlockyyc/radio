@@ -98,6 +98,7 @@ class Attacker(object):
         x = x.to(self.device).float()
         y = y.to(self.device).long()
 
+        self.attack_method.reset_model(model)
         x_advs, pertubations, logits, nowLabels = self.attack_method.attack(
             x, y, x_snr, **getattr(self.config, self.config.CONFIG['attack_name']))
 
@@ -308,13 +309,17 @@ class Attacker(object):
 
         return log
 
-    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, shift_k, is_uap, eps):
+    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, is_save_parameter, shift_k, is_uap, eps):
         """[对一个模型进行噪声偏移的攻击]
 
         Args:
             data_loader ([DataLoader]): [数据加载器]
             threat_model ([Model]): [用于生成对抗样本的白盒模型]
             black_model ([Model]): [用于攻击的黑盒模型]
+            load_parameter ([bool]):    [是否加载对抗样本，]
+            parameter_path ([str]):     [对抗样本的存储路径与名称]
+            is_save_parameter ([bool]):  [是否存储中间的对抗样本]
+            shift_k [int]:              [shift 攻击时的变动大小]
             is_uap ([bool]): [是否进行UAP攻击， True进行UAP攻击]
             eps ([float]): [UAP的eps大小]
 
@@ -331,10 +336,10 @@ class Attacker(object):
         if not load_parameter:
             white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
         else:
-            real_sample, adv_sample, targets, x_snrs, adv_pertub = self.load_pertub_parameter(parameter_path)
-            shift_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
-            shift_loader = DataLoader(shift_dataset, batch_size = 32, shuffle = False, num_workers = 4)
-            white_log = self._model_test(white_model, shift_loader)
+            white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = pickle.load(open(parameter_path, 'rb'))
+
+        if is_save_parameter:
+            pickle.dump([white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs], open(parameter_path, 'wb'))
 
         if is_uap:
             univeral_pertub = UAP(adv_pertub, eps)

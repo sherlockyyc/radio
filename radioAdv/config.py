@@ -25,42 +25,42 @@ class Config(object):
 
         #################################################模型选择
         ##########################模型参数
-        # self.VTCNN2 = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/VTCNN2/VTCNN2_Epoch85.pkl'
-        # )
-        # self.Based_GRU = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/Based_GRU/Based_GRU_Epoch1260.pkl'
-        # )
-        # self.Based_LSTM = dict(
-        #     filepath = ''
-        # )
-        # self.Based_VGG = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/Based_VGG/Based_VGG_Epoch1160.pkl'
-        # )
-        # self.Based_ResNet = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
-        # )
-        # self.CLDNN = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
-        # )
         self.VTCNN2 = dict(
-            filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/VTCNN2/VTCNN2_Epoch85.pkl'
         )
         self.Based_GRU = dict(
-            filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/Based_GRU/Based_GRU_Epoch1260.pkl'
         )
         self.Based_LSTM = dict(
             filepath = ''
         )
         self.Based_VGG = dict(
-            filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Epoch1160.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/Based_VGG/Based_VGG_Epoch1160.pkl'
         )
         self.Based_ResNet = dict(
-            filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
         )
         self.CLDNN = dict(
-            filepath = '/home/yuzhen/wireless/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
+            filepath = '/home/baiding/Study/research/radio/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
         )
+        # self.VTCNN2 = dict(
+        #     filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
+        # )
+        # self.Based_GRU = dict(
+        #     filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
+        # )
+        # self.Based_LSTM = dict(
+        #     filepath = ''
+        # )
+        # self.Based_VGG = dict(
+        #     filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Epoch1160.pkl'
+        # )
+        # self.Based_ResNet = dict(
+        #     filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
+        # )
+        # self.CLDNN = dict(
+        #     filepath = '/home/yuzhen/wireless/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
+        # )
 
 
 
@@ -75,14 +75,14 @@ class Config(object):
             dirname = '/home/baiding/Desktop/Study/Deep/datasets/MNIST/raw',            #MNIST数据集存放的文件夹
             is_vector = False,         #False表示得到784维向量数据，True表示得到28*28的图片数据
         )
-        # self.Rml2016_10a = dict(
-        #     dirname = "/home/baiding/Study/research/radio/RML2016.10a",  # 数据集文件路径
-        #     prop = 0.8,                     # 所占的比例
-        # )
         self.Rml2016_10a = dict(
-            dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
+            dirname = "/home/baiding/Study/research/radio/RML2016.10a",  # 数据集文件路径
             prop = 0.8,                     # 所占的比例
         )
+        # self.Rml2016_10a = dict(
+        #     dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
+        #     prop = 0.8,                     # 所占的比例
+        # )
 
 
 
@@ -157,7 +157,8 @@ class Config(object):
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
-            parameter_path = './tmp_parameters/shifting_pertubation_1.p',   #
+            parameter_path = './parameter/vtcnn_pim.p',   #
+            is_save_parameter = True,
             shift_k = 64,
             is_uap = False,
             eps = 0.003,
