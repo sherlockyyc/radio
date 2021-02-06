@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'MI_FGSM',       #设定攻击方法的名称
+            attack_name = 'PIM_MIM',       #设定攻击方法的名称
         )
 
 
@@ -185,7 +185,7 @@ class Config(object):
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
-            parameter_path = './parameter/vtcnn2_mim_003.p',   #
+            parameter_path = './parameter/vtcnn2_pim_mim_003.p',   #
             is_save_parameter = True,
             shift_k = 64,
             is_uap = False,
