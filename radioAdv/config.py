@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'PIM',       #设定攻击方法的名称
+            attack_name = 'MI_FGSM',       #设定攻击方法的名称
         )
 
 
@@ -127,14 +127,42 @@ class Config(object):
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
         )
-        self.PIM = dict(
-            eps = 1e-4,                # 控制大小的参数
-            epoch = 40,                 # 迭代次数
+        # CW
+        self.CW = dict(
+            binary_search_steps=9, 
+            n_iters=10000, 
+            c=1e-4, 
+            kappa=0, 
+            lr=0.01, 
+            is_target=False, 
+            target=0
+        )
+
+        self.PIM_FGSM = dict(
+            eps = 30*1e-4,                # 控制大小的参数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
             shift = 8,                 # 在两边扩充noise, 20 + noise + 20
-            sample_num = 16,             # 采样点
+            sample_num = 128,             # 采样点
+        )
+        self.PIM_PGD = dict(
+            eps = 1e-4,                # 控制大小的参数
+            epoch = 30,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+            shift = 8,                 # 在两边扩充noise, 20 + noise + 20
+            sample_num = 128,             # 采样点
+        )
+        self.PIM_MIM = dict(
+            eps = 1e-4,                # 控制大小的参数
+            epoch = 30,                 # 迭代次数
+            is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
+            target = 3,                 # 目标攻击的目标
+            mu = 1,                     # momentum参数
+            shift = 8,                 # 在两边扩充noise, 20 + noise + 20
+            sample_num = 128,             # 采样点
         )
 
         #################################################log
@@ -151,13 +179,13 @@ class Config(object):
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
-            black_model = 'Based_GRU',
+            black_model = 'VTCNN2',
             is_uap = False,
             eps = 0.003,
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
-            parameter_path = './parameter/vtcnn_pim.p',   #
+            parameter_path = './parameter/vtcnn2_mim_003.p',   #
             is_save_parameter = True,
             shift_k = 64,
             is_uap = False,

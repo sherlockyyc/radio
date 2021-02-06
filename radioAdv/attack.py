@@ -28,14 +28,14 @@ Log = config.log_output()
 ######################################加载数据集
 dataset_name = config.CONFIG['dataset_name']
 attack_set = getattr(data_loader, dataset_name + 'AttackSet')(**getattr(config, dataset_name))
-# test_set = getattr(data_loader, dataset_name + 'TestSet')(**getattr(config, dataset_name))
+test_set = getattr(data_loader, dataset_name + 'TestSet')(**getattr(config, dataset_name))
 train_set = getattr(data_loader, dataset_name + 'TrainSet')(**getattr(config, dataset_name))
-snrs, mods = attack_set.get_snr_and_mod()  
-# snrs, mods = test_set.get_snr_and_mod()
+# snrs, mods = attack_set.get_snr_and_mod()  
+snrs, mods = test_set.get_snr_and_mod()
 
 ######################################加载数据加载器
 attack_loader = DataLoader(attack_set, batch_size = 32, shuffle = False, num_workers = 4)
-# test_loader = DataLoader(test_set, batch_size = 32, shuffle = True, num_workers = 1)
+test_loader = DataLoader(test_set, batch_size = 32, shuffle = True, num_workers = 1)
 train_loader = DataLoader(train_set, batch_size = 32, shuffle = True, num_workers = 1)
 
 ######################################加载模型

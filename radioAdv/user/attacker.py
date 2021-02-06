@@ -553,7 +553,7 @@ class Attacker(object):
         Args:
             data_loader ([type]): [description]
         """
-        sample_matrix = np.ones((11, 10)) * 20
+        sample_matrix = np.ones((11, 20)) * 20
         data = []
         labels = []
         snrs = []
@@ -561,24 +561,25 @@ class Attacker(object):
             x = np.array(x)
             y = np.array(y)
             x_snr = np.array(x_snr)
-            index = x_snr>= 0
-            after_snr_x = x[index]
-            after_snr_y = y[index]
-            after_snr_snr = x_snr[index]
-            for (one_x, one_y, one_x_snr) in zip(after_snr_x, after_snr_y, after_snr_snr):
-                if sample_matrix[one_y, one_x_snr//2] > 0:
-                    sample_matrix[one_y, one_x_snr//2] -= 1
+            # index = x_snr>= 0
+            # after_snr_x = x[index]
+            # after_snr_y = y[index]
+            # after_snr_snr = x_snr[index]
+            for (one_x, one_y, one_x_snr) in zip(x, y, x_snr):
+                if sample_matrix[one_y, (one_x_snr+20)//2] > 0:
+                    sample_matrix[one_y,  (one_x_snr+20)//2] -= 1
                     data.append(one_x)
                     labels.append(one_y)
                     snrs.append(one_x_snr)
             if np.max(sample_matrix) == 0:
                 break
         data = np.stack(data)
+        print(data.shape)
         labels = np.array(labels)
         snrs = np.array(snrs)
-        print('-----生成了{}个数据'.format(len(data)))
-        dirname = '/home/baiding/Study/research/radio'
-        pickle.dump([data, labels, snrs], open(os.path.join(dirname, 'attack_data.p'), 'wb'))
+        print('-----生成了{}个数据'.format(data.shape))
+        dirname = "/home/yuzhen/wireless/RML2016.10a"
+        pickle.dump([data, labels, snrs], open(os.path.join(dirname, 'attack_data2.p'), 'wb'))
         print('-----已完成数据存储-----')
 
     def judge_data(self, model, data, labels, snrs):

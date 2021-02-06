@@ -147,7 +147,7 @@ class Rml2016_10aAttackSet(Dataset):
             prop ([float]): [训练集所占的比例]
         """        
 
-        attack_x, attack_y, attack_snr = pickle.load(open(os.path.join(dirname, 'attack_data.p'), 'rb'))
+        attack_x, attack_y, attack_snr = pickle.load(open(os.path.join(dirname, 'attack_data2.p'), 'rb'))
         snrs, mods = pickle.load(open(os.path.join(dirname, 'augments.p'), 'rb'))
 
         self.data = attack_x

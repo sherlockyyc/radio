@@ -13,4 +13,8 @@ from adv_method.pgd import *
 from adv_method.jsma import *
 from adv_method.mi_fgsm import *
 from adv_method.ni_fgsm import *
-from adv_method.pim import *
+from adv_method.cw import *
+
+from adv_method.pim_fgsm import *
+from adv_method.pim_pgd import *
+from adv_method.pim_mim import *
