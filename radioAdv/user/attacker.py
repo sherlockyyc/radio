@@ -309,7 +309,7 @@ class Attacker(object):
 
         return log
 
-    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, is_save_parameter, shift_k, is_uap, eps, is_sim):
+    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, is_save_parameter, shift_k, is_uap, eps, is_sim, save_k):
         """[对一个模型进行噪声偏移的攻击]
 
         Args:
@@ -349,7 +349,7 @@ class Attacker(object):
             pertub_mean = np.mean(np.abs(adv_pertub))
             log['UAP pertub_mean'] = pertub_mean
         if is_sim:
-            univeral_pertub = SIM(white_model, real_sample, adv_pertub, targets, shift_k, eps)
+            univeral_pertub = SIM(white_model, real_sample, adv_pertub, targets, shift_k, eps, save_k)
             univeral_pertub = np.expand_dims(univeral_pertub, axis=0)
             adv_pertub = np.tile(univeral_pertub, (adv_pertub.shape[0],1,1,1))
             adv_sample = real_sample + adv_pertub
@@ -488,6 +488,7 @@ class Attacker(object):
 
 
     def _model_test(self, model, data_loader):
+        model.eval()
         predict = []
         targets = []
         snr_acc = np.zeros(len(self.snrs))
@@ -713,7 +714,7 @@ def UAP(pertubation, eps):
     univeral_pertub = 2*eps * normalization(univeral_pertub)
     return univeral_pertub
 
-def SIM(model, x, adv_pertub, y, shift_k, eps):
+def SIM(model, x, adv_pertub, y, shift_k, eps, save_k):
     device = torch.device('cuda', 1)
     adv_sample_list = []
     print('SIM 数据生成中--------------------')
@@ -746,7 +747,7 @@ def SIM(model, x, adv_pertub, y, shift_k, eps):
 
         score = list(logits[:, label])
         # print(score.shape)
-        min_num_index_list = list(map(score.index, heapq.nsmallest(40, score)))
+        min_num_index_list = list(map(score.index, heapq.nsmallest(save_k, score)))
         pick_adv_sample = adv_sample[min_num_index_list]
         pick_adv_perturb = np.array(pick_adv_sample.detach().cpu() - x[i])
         pick_adv_perturb_list.append(pick_adv_perturb)

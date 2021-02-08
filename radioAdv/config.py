@@ -227,12 +227,13 @@ class Config(object):
         )
         self.Shifting_Attack = dict(
             load_parameter = True,         # 是否加载预攻击的扰动
-            parameter_path = './parameter/vtcnn2_fgsm_0020.p',   #
+            parameter_path = './parameter/vtcnn2_nam_0020_v.p',   #
             is_save_parameter = False,
             shift_k = 64,
             is_uap = False,
             eps = 0.002,
-            is_sim = True
+            is_sim = True,
+            save_k = 4,
         )
 
     def log_output(self):
@@ -248,6 +249,9 @@ class Config(object):
         log['Switch_Method'] = self.Switch_Method['method']
         if self.Switch_Method['method'] != 'White_Attack':
             log.update(self.Black_Attack)
+        elif self.Switch_Method['method'] != 'Shifting_Attack':
+            log.update(self.Black_Attack)
+            log.update(self.Shifting_Attack)
         return log
         
     
