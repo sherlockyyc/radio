@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-21 16:56:20
-LastEditTime: 2021-02-04 19:26:10
+LastEditTime: 2021-02-08 20:08:25
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_sample.py
@@ -96,6 +96,8 @@ class PIM_MIM(BaseMethod):
             sample_pertubation = sample_pertubation/sample_num
             pertubation += sample_pertubation
         
+        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), epoch * eps)
+        pertubation = torch.tensor(pertubation).type_as(x)
         x_adv = x + pertubation
 
         return x_adv, pertubation

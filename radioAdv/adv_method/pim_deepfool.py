@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-21 16:56:20
-LastEditTime: 2021-02-04 19:26:10
+LastEditTime: 2021-02-08 20:08:12
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_sample.py
@@ -27,7 +27,7 @@ class PIM_DeepFool(BaseMethod):
         """
         super(PIM_DeepFool,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, x_snr=[], max_iter=10, is_target=False, target=0, mu = 1, shift = 20, sample_num = 10):
+    def attack(self, x, y=0, x_snr=[], max_iter=10, is_target=False, target=0, mu = 1, shift = 20, sample_num = 10, eps = 0.2):
         """[summary]
 
         Args:
@@ -49,7 +49,7 @@ class PIM_DeepFool(BaseMethod):
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, max_iter, mu, shift, sample_num )
+            x_adv,pertubation = self._attackWithNoTarget(x, y, max_iter, mu, shift, sample_num, eps )
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()
@@ -61,7 +61,7 @@ class PIM_DeepFool(BaseMethod):
         return x_adv, pertubation, logits, pred
 
 
-    def _attackWithNoTarget(self, x, y, max_iter, mu, shift, sample_num ):
+    def _attackWithNoTarget(self, x, y, max_iter, mu, shift, sample_num, eps ):
         x_advs = []
         pertubations = []
         
@@ -136,6 +136,9 @@ class PIM_DeepFool(BaseMethod):
         # 把一个batch的图片整合起来
         x_advs = torch.cat(x_advs, dim = 0)
         pertubations = torch.cat(pertubations, dim = 0)
+        pertubations = self.norm_l1(pertubations.detach().cpu().numpy(), eps)
+        pertubations = torch.tensor(pertubations).type_as(x)
+        x_advs = x + pertubations
 
         return x_advs, pertubations
 

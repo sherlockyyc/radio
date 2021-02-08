@@ -74,6 +74,9 @@ class NI_FGSM(BaseMethod):
             x_adv = x_adv.detach() + eps * sign_data_grad
             # x_adv = torch.clamp(x_adv, 0, 1)
         pertubation = x_adv - x
+        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), epoch * eps)
+        pertubation = torch.tensor(pertubation).type_as(x)
+        x_adv = x + pertubation
 
         return x_adv, pertubation
 

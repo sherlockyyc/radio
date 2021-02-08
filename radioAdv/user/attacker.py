@@ -349,7 +349,7 @@ class Attacker(object):
             pertub_mean = np.mean(np.abs(adv_pertub))
             log['UAP pertub_mean'] = pertub_mean
         if is_sim:
-            univeral_pertub = SIM(white_model, real_sample, adv_pertub, targets, shift_k, eps, save_k)
+            univeral_pertub = self.SIM(white_model, real_sample, adv_pertub, targets, shift_k, eps, save_k)
             univeral_pertub = np.expand_dims(univeral_pertub, axis=0)
             adv_pertub = np.tile(univeral_pertub, (adv_pertub.shape[0],1,1,1))
             adv_sample = real_sample + adv_pertub
@@ -661,6 +661,47 @@ class Attacker(object):
             acc_metrics[i] = metric(logits,targets)
         return acc_metrics
 
+    def SIM(self, model, x, adv_pertub, y, shift_k, eps, save_k):
+        adv_sample_list = []
+        print('SIM 数据生成中--------------------')
+        for k in tqdm(range(-shift_k, shift_k+1, 1)):
+            first_pertubation = adv_pertub.copy()
+            second_pertubation = adv_pertub.copy()
+
+            if k > 0:
+                # 扰动在信号的后面
+                first_noise = first_pertubation[:, :, :, 128 - k: 128]
+                second_noise = second_pertubation[:, :, :, : 128 - k]
+                adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
+            elif k < 0:
+                # 扰动在信号的前面
+                first_noise = first_pertubation[:, :, :, -k : 128]
+                second_noise = second_pertubation[:, :, :, : -k]
+                adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
+            else:
+                adv_pertub_tranfer = first_pertubation
+            
+            adv_sample = adv_pertub_tranfer + x
+            adv_sample_list.append(adv_sample)
+        
+        adv_sample_array = torch.tensor(np.array(adv_sample_list))
+        pick_adv_perturb_list = []
+        for i in range(adv_sample_array.shape[1]):
+            adv_sample = adv_sample_array[:, i, :, :, :].to(self.device)
+            label = y[i]
+            logits = model(adv_sample).detach().cpu().numpy()
+
+            score = list(logits[:, label])
+            # print(score.shape)
+            min_num_index_list = list(map(score.index, heapq.nsmallest(save_k, score)))
+            pick_adv_sample = adv_sample[min_num_index_list]
+            pick_adv_perturb = np.array(pick_adv_sample.detach().cpu() - x[i])
+            pick_adv_perturb_list.append(pick_adv_perturb)
+        
+        pick_adv_perturb_array = np.vstack(pick_adv_perturb_list)
+        univeral_pertub = UAP(pick_adv_perturb_array, eps)
+        # print(univeral_pertub)
+        return univeral_pertub
 
 def normalization(data):
     _range = np.max(data) - np.min(data)
@@ -671,6 +712,12 @@ def standardization(data):
     mu = np.mean(data, axis=1)
     sigma = np.std(data, axis=1)
     return (data - mu) / sigma
+
+def norm_l1(data, eps):
+    for i in range(data.shape[0]):
+        m = np.mean(np.abs(data[i]))
+        data[i] = eps * data[i]/m
+    return data
 
 def PCA(XMat, k):
     """[PCA降维]
@@ -711,48 +758,7 @@ def UAP(pertubation, eps):
     reshape_pertubation = pertubation.reshape(shape[0], -1).T
     univeral_pertub = PCA(reshape_pertubation, 1)
     univeral_pertub = univeral_pertub.reshape(*shape[1:])
-    univeral_pertub = 2*eps * standardization(univeral_pertub)
+    univeral_pertub = norm_l1(univeral_pertub, eps)
     return univeral_pertub
 
-def SIM(model, x, adv_pertub, y, shift_k, eps, save_k):
-    device = torch.device('cuda', 2)
-    adv_sample_list = []
-    print('SIM 数据生成中--------------------')
-    for k in tqdm(range(-shift_k, shift_k+1, 1)):
-        first_pertubation = adv_pertub.copy()
-        second_pertubation = adv_pertub.copy()
 
-        if k > 0:
-            # 扰动在信号的后面
-            first_noise = first_pertubation[:, :, :, 128 - k: 128]
-            second_noise = second_pertubation[:, :, :, : 128 - k]
-            adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
-        elif k < 0:
-            # 扰动在信号的前面
-            first_noise = first_pertubation[:, :, :, -k : 128]
-            second_noise = second_pertubation[:, :, :, : -k]
-            adv_pertub_tranfer = np.concatenate((first_noise, second_noise),axis=-1)
-        else:
-            adv_pertub_tranfer = first_pertubation
-        
-        adv_sample = adv_pertub_tranfer + x
-        adv_sample_list.append(adv_sample)
-    
-    adv_sample_array = torch.tensor(np.array(adv_sample_list))
-    pick_adv_perturb_list = []
-    for i in range(adv_sample_array.shape[1]):
-        adv_sample = adv_sample_array[:, i, :, :, :].to(device)
-        label = y[i]
-        logits = model(adv_sample).detach().cpu().numpy()
-
-        score = list(logits[:, label])
-        # print(score.shape)
-        min_num_index_list = list(map(score.index, heapq.nsmallest(save_k, score)))
-        pick_adv_sample = adv_sample[min_num_index_list]
-        pick_adv_perturb = np.array(pick_adv_sample.detach().cpu() - x[i])
-        pick_adv_perturb_list.append(pick_adv_perturb)
-    
-    pick_adv_perturb_array = np.vstack(pick_adv_perturb_list)
-    univeral_pertub = UAP(pick_adv_perturb_array, eps)
-    # print(univeral_pertub)
-    return univeral_pertub

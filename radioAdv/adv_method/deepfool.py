@@ -23,7 +23,7 @@ class DeepFool(BaseMethod):
         """
         super(DeepFool,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, x_snr=[], max_iter=10, is_target=False, target=0):
+    def attack(self, x, y=0, x_snr=[], max_iter=10, is_target=False, target=0, eps=0.2):
         """[summary]
 
         Args:
@@ -44,7 +44,7 @@ class DeepFool(BaseMethod):
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, max_iter)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, max_iter, eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
 
@@ -58,7 +58,7 @@ class DeepFool(BaseMethod):
         return x_adv, pertubation, logits, pred
 
 
-    def _attackWithNoTarget(self, x, y, max_iter):
+    def _attackWithNoTarget(self, x, y, max_iter, eps):
         
         x_advs = []
         pertubations = []
@@ -102,7 +102,7 @@ class DeepFool(BaseMethod):
                         l = k
                         l_w = w_k
                 # 计算扰动值
-                r = (1+0.02)*l_value * l_w
+                r = (1+0.0001)*l_value * l_w
                 x_adv = x_adv + r
                 x_adv = x_adv.detach()
                 # x_adv = torch.clamp(x_adv, 0, 1)
@@ -117,6 +117,10 @@ class DeepFool(BaseMethod):
         # 把一个batch的图片整合起来
         x_advs = torch.cat(x_advs, dim = 0)
         pertubations = torch.cat(pertubations, dim = 0)
+
+        pertubations = self.norm_l1(pertubations.detach().cpu().numpy(), eps)
+        pertubations = torch.tensor(pertubations).type_as(x)
+        x_advs = x + pertubations
 
         return x_advs, pertubations
 

@@ -82,6 +82,9 @@ class FGSM(BaseMethod):
         # x_adv = torch.clamp(x_adv, 0, 1)
         pertubation = x_adv - x
 
+        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(),  eps)
+        pertubation = torch.tensor(pertubation).type_as(x)
+        x_adv = x + pertubation
 
         return x_adv, pertubation
 

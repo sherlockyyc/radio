@@ -9,7 +9,7 @@ class Config(object):
         ##################################################GPU配置
         self.GPU = dict(
             use_gpu = True,             #是否使用GPU，True表示使用
-            device_id = [2],            #所使用的GPU设备号，type=list
+            device_id = [0],            #所使用的GPU设备号，type=list
         )
 
 
@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'PIM_FGSM',       #设定攻击方法的名称
+            attack_name = 'DeepFool',       #设定攻击方法的名称
         )
 
 
@@ -102,7 +102,8 @@ class Config(object):
         )
         ##########################DeepFool方法
         self.DeepFool = dict(
-            max_iter = 30,              #最大寻找次数
+            max_iter = 40,              #最大寻找次数
+            eps = 0.002
         )
         ## PGD
         self.PGD = dict(
@@ -114,7 +115,7 @@ class Config(object):
         ## MI-FGSM
         self.MI_FGSM = dict(
             eps = 1e-4,                # 控制大小的参数
-            epoch = 25,                 # 迭代次数
+            epoch = 20,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
@@ -130,7 +131,7 @@ class Config(object):
         # CW
         self.CW = dict(
             binary_search_steps=9, 
-            n_iters=20000, 
+            n_iters=5000, 
             c=1e-4, 
             kappa=0, 
             lr=0.01, 
@@ -143,7 +144,7 @@ class Config(object):
         )
         self.NAM = dict(
             eps = 1e-4,                # 控制大小的参数
-            epoch = 27,                 # 迭代次数
+            epoch = 20,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             beta1 = 0.9,
@@ -184,6 +185,7 @@ class Config(object):
             mu = 1,                     # momentum参数
             shift = 8,                 # 在两边扩充noise, 20 + noise + 20
             sample_num = 4,             # 采样点
+            eps = 0.002
         )
         self.PIM_CW = dict(
             n_iters=10000, 
@@ -198,7 +200,7 @@ class Config(object):
         )
         self.PIM_NAM = dict(
             eps = 1e-4,                # 控制大小的参数
-            epoch = 27,                 # 迭代次数
+            epoch = 20,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             beta1 = 0.9,
@@ -226,13 +228,13 @@ class Config(object):
             eps = 0.003,
         )
         self.Shifting_Attack = dict(
-            load_parameter = True,         # 是否加载预攻击的扰动
-            parameter_path = './parameter/vtcnn2_fgsm_0020.p',   #
-            is_save_parameter = False,
+            load_parameter = False,         # 是否加载预攻击的扰动
+            parameter_path = './parameter/vtcnn2_deepfool_0020_v.p',   #
+            is_save_parameter = True,
             shift_k = 64,
             is_uap = False,
             eps = 0.002,
-            is_sim = True,
+            is_sim = False,
             save_k = 4,
         )
 
@@ -247,9 +249,7 @@ class Config(object):
             else:
                 log[name] = value
         log['Switch_Method'] = self.Switch_Method['method']
-        if self.Switch_Method['method'] != 'White_Attack':
-            log.update(self.Black_Attack)
-        elif self.Switch_Method['method'] != 'Shifting_Attack':
+        if self.Switch_Method['method'] == 'Shifting_Attack':
             log.update(self.Black_Attack)
             log.update(self.Shifting_Attack)
         return log

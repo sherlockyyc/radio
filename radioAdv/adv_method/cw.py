@@ -90,6 +90,9 @@ class CW(BaseMethod):
             x_adv = self.scaler(x_arctanh + delta).detach()
             pertubation = x_adv - x
             
+            pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), eps)
+            pertubation = torch.tensor(pertubation).type_as(x)
+            x_adv = x + pertubation
             return x_adv, pertubation
 
     def _attackWithTarget(self, x, target, binary_search_steps, n_iters, c, kappa, lr):

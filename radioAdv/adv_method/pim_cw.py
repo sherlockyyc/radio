@@ -106,7 +106,8 @@ class PIM_CW(BaseMethod):
 
         sample_pertubation = sample_pertubation/sample_num
         perturbation = sample_pertubation
-        
+        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), epoch * eps)
+        pertubation = torch.tensor(pertubation).type_as(x)
         x_adv = x + perturbation
         return x_adv, perturbation
         

@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-21 16:56:20
-LastEditTime: 2021-02-04 19:26:10
+LastEditTime: 2021-02-08 19:53:24
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_sample.py
@@ -90,7 +90,7 @@ class PIM_FGSM(BaseMethod):
             
         sample_pertubation = sample_pertubation/sample_num
         sample_pertubation = sample_pertubation.detach().cpu().numpy()
-        pertubation = eps * self.standardization(sample_pertubation)
+        pertubation = self.norm_l1(sample_pertubation, eps)
         pertubation = torch.tensor(pertubation).type_as(x)
 
         x_adv = x + pertubation
@@ -121,11 +121,3 @@ class PIM_FGSM(BaseMethod):
             pertubation = x_adv - x
 
         return x_adv, pertubation
-
-    def standardization(self, data):
-        mu = np.mean(data, axis=-1)
-        sigma = np.std(data, axis=-1)
-        data = data.transpose(3,0,1,2)
-        data = (data - mu) / sigma
-        data = data.transpose(1,2,3,0)
-        return data

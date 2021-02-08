@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-19 19:03:11
-LastEditTime: 2020-12-21 21:32:48
+LastEditTime: 2021-02-08 20:08:03
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/pgd.py
@@ -104,6 +104,9 @@ class PGD(BaseMethod):
             # x_adv = torch.clamp(x_adv, 0, 1)
             pertubation = x_adv - x
 
+        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), epoch * eps)
+        pertubation = torch.tensor(pertubation).type_as(x)
+        x_adv = x + pertubation
         return x_adv, pertubation
 
     def project(self, origin_x, now_x, eps):

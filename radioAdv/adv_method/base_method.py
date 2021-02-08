@@ -105,3 +105,9 @@ class BaseMethod(object):
 
     def reset_model(self, model):
         self.model = model
+
+    def norm_l1(self, data, eps):
+        for i in range(data.shape[0]):
+            m = np.mean(np.abs(data[i]))
+            data[i] = eps * data[i]/m
+        return data

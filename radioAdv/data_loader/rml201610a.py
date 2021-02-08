@@ -154,7 +154,8 @@ class Rml2016_10aAttackSet(Dataset):
         self.labels = attack_y
         self.data_snr = attack_snr
         # snr_0 = snrs.index(0)
-        # snr_index = self.data_snr == 10
+        # snr_index = (self.data_snr == 10) | (self.data_snr == 0)
+        # snr_index = (self.data_snr == 10)
         # self.data = attack_x[snr_index]
         # self.labels = attack_y[snr_index]
         # self.data_snr = attack_snr[snr_index]
