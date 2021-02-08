@@ -668,8 +668,8 @@ def normalization(data):
  
  
 def standardization(data):
-    mu = np.mean(data, axis=0)
-    sigma = np.std(data, axis=0)
+    mu = np.mean(data, axis=1)
+    sigma = np.std(data, axis=1)
     return (data - mu) / sigma
 
 def PCA(XMat, k):
@@ -711,11 +711,11 @@ def UAP(pertubation, eps):
     reshape_pertubation = pertubation.reshape(shape[0], -1).T
     univeral_pertub = PCA(reshape_pertubation, 1)
     univeral_pertub = univeral_pertub.reshape(*shape[1:])
-    univeral_pertub = 2*eps * normalization(univeral_pertub)
+    univeral_pertub = 2*eps * standardization(univeral_pertub)
     return univeral_pertub
 
 def SIM(model, x, adv_pertub, y, shift_k, eps, save_k):
-    device = torch.device('cuda', 1)
+    device = torch.device('cuda', 2)
     adv_sample_list = []
     print('SIM 数据生成中--------------------')
     for k in tqdm(range(-shift_k, shift_k+1, 1)):
@@ -754,4 +754,5 @@ def SIM(model, x, adv_pertub, y, shift_k, eps, save_k):
     
     pick_adv_perturb_array = np.vstack(pick_adv_perturb_list)
     univeral_pertub = UAP(pick_adv_perturb_array, eps)
+    # print(univeral_pertub)
     return univeral_pertub
