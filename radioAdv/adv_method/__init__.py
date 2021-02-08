@@ -14,7 +14,12 @@ from adv_method.jsma import *
 from adv_method.mi_fgsm import *
 from adv_method.ni_fgsm import *
 from adv_method.cw import *
+from adv_method.jamming import *
+from adv_method.nam import *
 
 from adv_method.pim_fgsm import *
 from adv_method.pim_pgd import *
 from adv_method.pim_mim import *
+from adv_method.pim_deepfool import *
+from adv_method.pim_cw import *
+from adv_method.pim_nam import *

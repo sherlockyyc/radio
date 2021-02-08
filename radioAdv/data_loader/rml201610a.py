@@ -153,8 +153,9 @@ class Rml2016_10aAttackSet(Dataset):
         self.data = attack_x
         self.labels = attack_y
         self.data_snr = attack_snr
-        snr_0 = snrs.index(0)
-        self.snrs = snrs[snr_0:]
+        # snr_0 = snrs.index(0)
+        # self.snrs = snrs[snr_0:]
+        self.snrs = snrs
         self.mods = mods
         
     def __getitem__(self,idx):

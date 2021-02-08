@@ -17,7 +17,7 @@ class Config(object):
 
         self.CONFIG = dict(
             dataset_name = 'Rml2016_10a',     # 所选择的数据集的名称
-            model_name = 'Based_LSTM',       # 攻击模型的名称
+            model_name = 'Based_GRU',       # 攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       # 失函数的名称
             optimizer_name = 'Adam',     # 优化器的名称（torch.nn中）
             metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
@@ -69,7 +69,7 @@ class Config(object):
         #--------------------------------数据集参数
         self.Rml2016_10a = dict(
             dirname = "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
-            prop = 0.8,                     # 所占的比例
+            prop = 0.5,                     # 所占的比例
         )
 
         
@@ -85,7 +85,7 @@ class Config(object):
 
         #------------------------------------------------模型加载
         self.LoadModel = dict(
-            filename = './checkpoint/Rml2016_10a_Based_LSTM_V1/Based_LSTM_Epoch160.pkl',     #加载模型的位置，与上面模型要对应
+            filename = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl',     #加载模型的位置，与上面模型要对应
             base_epoch = 0,           # 预训练的基础epoch
         )
 

@@ -201,9 +201,5 @@ class BaseTrainer(object):
         message = "There's not checkpoint"
         assert os.path.exists(model_filename),message
         print("Loading checkpoint: {} ...".format(model_filename))
-        checkpoint = torch.load(model_filename)
+        checkpoint = torch.load(model_filename, map_location='cpu')
         self.model.load_state_dict(checkpoint['state_dict'])
-
-
-
-            
