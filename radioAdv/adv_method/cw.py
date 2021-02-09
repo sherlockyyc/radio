@@ -23,7 +23,7 @@ class CW(BaseMethod):
         """
         super(CW,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, x_snr=[], binary_search_steps=9, n_iters=10000, c=1e-4, kappa=0, lr=0.01, is_target=False, target=0):
+    def attack(self, x, y=0, x_snr=[], binary_search_steps=9, n_iters=10000, c=1e-4, kappa=0, lr=0.01, is_target=False, target=0, eps=0.002):
         """[summary]
 
         Args:
@@ -46,7 +46,7 @@ class CW(BaseMethod):
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, binary_search_steps, n_iters, c, kappa, lr)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, binary_search_steps, n_iters, c, kappa, lr, eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()
@@ -61,7 +61,7 @@ class CW(BaseMethod):
         return x_adv, pertubation, logits, pred
 
 
-    def _attackWithNoTarget(self, x, y, binary_search_steps, n_iters, c, kappa, lr):
+    def _attackWithNoTarget(self, x, y, binary_search_steps, n_iters, c, kappa, lr, eps):
         x_arctanh = self.arctanh(x)
 
         for _ in range(binary_search_steps):

@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-21 16:56:20
-LastEditTime: 2021-02-04 19:26:10
+LastEditTime: 2021-02-09 10:39:03
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_sample.py
@@ -27,7 +27,7 @@ class PIM_CW(BaseMethod):
         """
         super(PIM_CW,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
 
-    def attack(self, x, y=0, x_snr=[], n_iters=10000, c=1e-4, kappa=0, lr=0.01, is_target=False, target=0, mu = 1, shift = 20, sample_num = 10):
+    def attack(self, x, y=0, x_snr=[], n_iters=10000, c=1e-4, kappa=0, lr=0.01, is_target=False, target=0, mu = 1, shift = 20, sample_num = 10, eps = 0.002):
         """[summary]
 
         Args:
@@ -49,7 +49,7 @@ class PIM_CW(BaseMethod):
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, n_iters, c, kappa, lr, shift, sample_num )
+            x_adv,pertubation = self._attackWithNoTarget(x, y, n_iters, c, kappa, lr, shift, sample_num, eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()
@@ -62,7 +62,7 @@ class PIM_CW(BaseMethod):
         return x_adv, pertubation, logits, pred
 
 
-    def _attackWithNoTarget(self, x, y, n_iters, c, kappa, lr, shift, sample_num ):
+    def _attackWithNoTarget(self, x, y, n_iters, c, kappa, lr, shift, sample_num, eps):
         x_adv = x.clone()
         sample_pertubation = torch.Tensor(np.zeros(x.shape)).type_as(x)
         for j in range(sample_num):

@@ -46,9 +46,15 @@ class Config(object):
         self.VTCNN2 = dict(
             filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
         )
+        # self.VTCNN2 = dict(
+        #     filepath = '/home/yuzhen/wireless/model/VTCNN2/Adv_Train_VTCNN2_Epoch230.pkl'
+        # )
         self.Based_GRU = dict(
             filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
         )
+        # self.Based_GRU = dict(
+        #     filepath = '/home/yuzhen/wireless/model/Based_GRU/Adv_Train_Based_GRU_Epoch170.pkl'
+        # )
         self.Based_LSTM = dict(
             filepath = ''
         )
@@ -102,7 +108,7 @@ class Config(object):
         )
         ##########################DeepFool方法
         self.DeepFool = dict(
-            max_iter = 40,              #最大寻找次数
+            max_iter = 20,              #最大寻找次数
             eps = 0.002
         )
         ## PGD
@@ -131,12 +137,13 @@ class Config(object):
         # CW
         self.CW = dict(
             binary_search_steps=9, 
-            n_iters=5000, 
+            n_iters=20000, 
             c=1e-4, 
             kappa=0, 
             lr=0.01, 
             is_target=False, 
-            target=0
+            target=0,
+            eps = 0.002
         )
         self.Jamming = dict(
             mean = 0.002,
@@ -179,10 +186,9 @@ class Config(object):
             sample_num = 128,             # 采样点
         )
         self.PIM_DeepFool = dict(
-            max_iter = 35,              #最大寻找次数
+            max_iter = 5,              #最大寻找次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
-            mu = 1,                     # momentum参数
             shift = 8,                 # 在两边扩充noise, 20 + noise + 20
             sample_num = 4,             # 采样点
             eps = 0.002
@@ -197,6 +203,7 @@ class Config(object):
             mu = 1,                     # momentum参数
             shift = 8,                 # 在两边扩充noise, 20 + noise + 20
             sample_num = 16,             # 采样点
+            eps = 0.002,
         )
         self.PIM_NAM = dict(
             eps = 1e-4,                # 控制大小的参数
