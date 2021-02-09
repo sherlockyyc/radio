@@ -17,12 +17,12 @@ class Config(object):
 
         self.CONFIG = dict(
             dataset_name = 'Rml2016_10a',     # 所选择的数据集的名称
-            model_name = 'Based_GRU',       # 攻击模型的名称
+            model_name = 'VTCNN2',       # 攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       # 失函数的名称
             optimizer_name = 'Adam',     # 优化器的名称（torch.nn中）
             metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
             adjust_lr = True,               # 是否自动的变化学习率
-            load_model = True,              # 是否加载预训练模型（测试、迁移）
+            load_model = False,              # 是否加载预训练模型（测试、迁移）
         )
 
         #------------------------------------------------训练参数设置
@@ -60,7 +60,7 @@ class Config(object):
 
         #------------------------------------------------优化器
         self.Adam = dict(
-            lr = 0.01,                  # 学习率
+            lr = 0.001,                  # 学习率
             weight_decay = 5e-3,        # 权重衰减
         )
 
@@ -79,7 +79,7 @@ class Config(object):
             lr_decay = 0.5,                 # 学习率变化的幅度
             increase_bottom = 5,            # 退火前学习率增加的上界
             increase_amp = 1.1,             # 学习率增加的幅度
-            warm_lr = 0.0001,               # 当学习率小于1e-8时，恢复学习率为warm_lr
+            warm_lr = 0.0002,               # 当学习率小于1e-8时，恢复学习率为warm_lr
         )
 
 

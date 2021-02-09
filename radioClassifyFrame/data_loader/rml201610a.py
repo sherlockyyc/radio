@@ -136,3 +136,30 @@ class Rml2016_10aTestSet(Dataset):
 
     def get_snr_and_mod(self):
         return self.snrs, self.mods
+
+
+class Rml2016_10aAdvTrainSet(Dataset):
+    def __init__(self,dirname, prop):
+        """[加载RML2016.10a训练集]
+
+        Args:
+            dirname ([str]): [RML2016.10a文件的绝对路径]]
+            prop ([float]): [训练集所占的比例]
+        """
+        
+        train_x, train_y, train_snr = pickle.load(open(os.path.join(dirname, 'adv_training_data.p'), 'rb'))
+        snrs, mods = pickle.load(open(os.path.join(dirname, 'augments.p'), 'rb'))
+        self.data = train_x
+        self.labels = train_y
+        self.train_snr = train_snr
+        self.snrs = snrs
+        self.mods = mods
+        
+    def __getitem__(self,idx):
+        return (self.data[idx],self.labels[idx], self.train_snr[idx])
+    
+    def __len__(self):
+        return len(self.data)
+
+    def get_snr_and_mod(self):
+        return self.snrs, self.mods

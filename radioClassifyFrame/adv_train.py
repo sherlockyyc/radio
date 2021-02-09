@@ -1,3 +1,11 @@
+'''
+Author: your name
+Date: 2021-02-08 18:56:51
+LastEditTime: 2021-02-09 10:16:12
+LastEditors: your name
+Description: In User Settings Edit
+FilePath: /radioClassifyFrame/adv_train.py
+'''
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
@@ -22,7 +30,7 @@ if __name__ == '__main__':
 
     optimizer = getattr(torch.optim, config.CONFIG['optimizer_name'])(model.parameters(),**getattr(config, config.CONFIG['optimizer_name']))
 
-    trainer = getattr(module_trainer, config.CONFIG['trainer_name'])(model, data_loader, criterion, optimizer, metrics, config)
+    trainer = module_trainer.ClassficationTrainer(model, data_loader, criterion, optimizer, metrics, config)
     print('start train')
     trainer.train()
 
