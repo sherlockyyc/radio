@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-12-21 16:56:20
-LastEditTime: 2021-02-09 10:39:03
+LastEditTime: 2021-02-09 16:45:52
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /radioAdv/adv_method/shifting_sample.py
@@ -105,11 +105,11 @@ class PIM_CW(BaseMethod):
             sample_pertubation += p
 
         sample_pertubation = sample_pertubation/sample_num
-        perturbation = sample_pertubation
-        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), epoch * eps)
+        pertubation = sample_pertubation
+        pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), eps)
         pertubation = torch.tensor(pertubation).type_as(x)
-        x_adv = x + perturbation
-        return x_adv, perturbation
+        x_adv = x + pertubation
+        return x_adv, pertubation
         
 
     def _attackWithTarget(self, x, target, n_iters, c, kappa, lr, shift, sample_num ):

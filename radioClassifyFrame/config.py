@@ -22,7 +22,7 @@ class Config(object):
             optimizer_name = 'Adam',     # 优化器的名称（torch.nn中）
             metrics = ['accuary'],        # 评价标准的名称（metric文件夹中）
             adjust_lr = True,               # 是否自动的变化学习率
-            load_model = False,              # 是否加载预训练模型（测试、迁移）
+            load_model = True,              # 是否加载预训练模型（测试、迁移）
         )
 
         #------------------------------------------------训练参数设置
@@ -60,7 +60,7 @@ class Config(object):
 
         #------------------------------------------------优化器
         self.Adam = dict(
-            lr = 0.001,                  # 学习率
+            lr = 0.003,                  # 学习率
             weight_decay = 5e-3,        # 权重衰减
         )
 
@@ -79,13 +79,13 @@ class Config(object):
             lr_decay = 0.5,                 # 学习率变化的幅度
             increase_bottom = 5,            # 退火前学习率增加的上界
             increase_amp = 1.1,             # 学习率增加的幅度
-            warm_lr = 0.0002,               # 当学习率小于1e-8时，恢复学习率为warm_lr
+            warm_lr = 0.0005,               # 当学习率小于1e-8时，恢复学习率为warm_lr
         )
 
 
         #------------------------------------------------模型加载
         self.LoadModel = dict(
-            filename = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl',     #加载模型的位置，与上面模型要对应
+            filename = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl',     #加载模型的位置，与上面模型要对应
             base_epoch = 0,           # 预训练的基础epoch
         )
 

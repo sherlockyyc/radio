@@ -81,18 +81,18 @@ class CW(BaseMethod):
                 loss.backward()
                 optimizer.step()
 
-                if step % (n_iters // 10) == 0:
-                    if loss > prev_loss:
-                        break
+                # if step % (n_iters // 10) == 0:
+                #     if loss > prev_loss:
+                #         break
 
-                    prev_loss = loss
+                #     prev_loss = loss
 
             x_adv = self.scaler(x_arctanh + delta).detach()
             pertubation = x_adv - x
             
-            pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), eps)
-            pertubation = torch.tensor(pertubation).type_as(x)
-            x_adv = x + pertubation
+            # pertubation = self.norm_l1(pertubation.detach().cpu().numpy(), eps)
+            # pertubation = torch.tensor(pertubation).type_as(x)
+            # x_adv = x + pertubation
             return x_adv, pertubation
 
     def _attackWithTarget(self, x, target, binary_search_steps, n_iters, c, kappa, lr):

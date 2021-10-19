@@ -147,6 +147,7 @@ class Attacker(object):
 
         pertub_max = 0
 
+        logits_list = []
         predict = []
         targets = []
         now_labels = []
@@ -185,7 +186,7 @@ class Attacker(object):
                 pertub_max = np.max(np.abs(pertubations))
 
             # 保存预测结果
-            predict.append(logits)
+            logits_list.append(logits)
             targets.append(y)
             now_labels.append(nowLabels)
 
@@ -204,6 +205,7 @@ class Attacker(object):
 
         predict = np.hstack(now_labels)
         targets = np.hstack(targets)
+        logits_list = np.vstack(logits_list)
 
         # 记录不同snr下的准确率
         snr_acc = snr_acc / snr_num
@@ -227,7 +229,7 @@ class Attacker(object):
         log['pertub_prop'] = pertub_prop
         log['pertub_max'] = pertub_max
         log['snr_acc'] = snr_acc
-        return log, real_sample, adv_sample, adv_pertub, targets, x_snrs
+        return log, real_sample, adv_sample, adv_pertub, predict, targets, logits_list, x_snrs
 
     def start_attack(self, data_loader):
         attack_method = self.config.Switch_Method['method']
@@ -247,7 +249,7 @@ class Attacker(object):
         return log
 
     def white_attack(self, data_loader):
-        log, _, _, _, _, _ = self.attack_set(self.model, data_loader)
+        log, _, _, _, _, _, _, _ = self.attack_set(self.model, data_loader)
         return log
 
 
@@ -266,10 +268,9 @@ class Attacker(object):
             mean [float]: 平均扰动大小
         """
         log = {}
-        model_name = self.config.Black_Attack['threat_model']
+        model_name = threat_model
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
-        white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
-        
+        white_log, real_sample, adv_sample, adv_pertub, predicts, targets, logits, x_snrs = self.attack_set(white_model, data_loader)
         for key, value in white_log.items():
             log['White_model   '+key] = value
 
@@ -283,7 +284,7 @@ class Attacker(object):
 
         torch.cuda.empty_cache()
 
-        model_name = self.config.Black_Attack['black_model']
+        model_name = black_model
         black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
 
         # 对Shifting_Noise_Extend攻击方式的噪声进行特殊处理，对每一个扰动，都进行随机的选择
@@ -334,12 +335,12 @@ class Attacker(object):
         model_name = self.config.Black_Attack['threat_model']
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
         if not load_parameter:
-            white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(white_model, data_loader)
+            white_log, real_sample, adv_sample, adv_pertub, predicts, targets, logits, x_snrs = self.attack_set(white_model, data_loader)
         else:
             white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs = pickle.load(open(parameter_path, 'rb'))
 
         if is_save_parameter:
-            pickle.dump([white_log, real_sample, adv_sample, adv_pertub, targets, x_snrs], open(parameter_path, 'wb'))
+            pickle.dump([white_log, real_sample, adv_sample, adv_pertub, predicts, targets, logits, x_snrs], open(parameter_path, 'wb'))
 
         if is_uap:
             univeral_pertub = UAP(adv_pertub, eps)
@@ -426,7 +427,7 @@ class Attacker(object):
         return log
 
     def adversarial_training_dataset_generating(self, data_loader, dirname):
-        log, real_sample, adv_sample, adv_pertub, targets, x_snrs = self.attack_set(self.model, data_loader)
+        log, real_sample, adv_sample, adv_pertub, predicts, targets, logits, x_snrs = self.attack_set(self.model, data_loader)
         train_x, train_y, train_snr = pickle.load(open(os.path.join(dirname, 'train_data.p'), 'rb'))
         adv_training_x = np.vstack([train_x, adv_sample])
         adv_training_y = np.hstack([train_y, targets])

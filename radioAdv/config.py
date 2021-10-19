@@ -9,7 +9,7 @@ class Config(object):
         ##################################################GPU配置
         self.GPU = dict(
             use_gpu = True,             #是否使用GPU，True表示使用
-            device_id = [0],            #所使用的GPU设备号，type=list
+            device_id = [1],            #所使用的GPU设备号，type=list
         )
 
 
@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',       #攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'DeepFool',       #设定攻击方法的名称
+            attack_name = 'PIM_NAM',       #设定攻击方法的名称
         )
 
 
@@ -95,7 +95,7 @@ class Config(object):
         #################################################攻击方法
         ##########################FGSM方法
         self.FGSM = dict(
-            eps = 20*1e-4,                  #FGSM的控制大小的参数
+            eps = 30*1e-4,                  #FGSM的控制大小的参数
             is_target = False,           #控制攻击方式，目标攻击、无目标攻击
             target = 3,               #目标攻击的目标
         )
@@ -108,20 +108,20 @@ class Config(object):
         )
         ##########################DeepFool方法
         self.DeepFool = dict(
-            max_iter = 20,              #最大寻找次数
-            eps = 0.002
+            max_iter = 5,              #最大寻找次数
+            eps = 0.0001
         )
         ## PGD
         self.PGD = dict(
             eps = 1e-4,                 # 控制大小的参数
-            epoch = 20,                  # 迭代次数
+            epoch = 10,                  # 迭代次数
             is_target = False,           # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                  # 目标攻击的目标
         )
         ## MI-FGSM
         self.MI_FGSM = dict(
             eps = 1e-4,                # 控制大小的参数
-            epoch = 20,                 # 迭代次数
+            epoch = 30,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
@@ -136,17 +136,17 @@ class Config(object):
         )
         # CW
         self.CW = dict(
-            binary_search_steps=9, 
-            n_iters=20000, 
+            binary_search_steps=10, 
+            n_iters=200, 
             c=1e-4, 
             kappa=0, 
-            lr=0.01, 
+            lr=0.0001, 
             is_target=False, 
             target=0,
-            eps = 0.002
+            eps = 0.001
         )
         self.Jamming = dict(
-            mean = 0.002,
+            mean = 0.003,
             std = 1.0
         )
         self.NAM = dict(
@@ -186,23 +186,23 @@ class Config(object):
             sample_num = 128,             # 采样点
         )
         self.PIM_DeepFool = dict(
-            max_iter = 5,              #最大寻找次数
+            max_iter = 35,              #最大寻找次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             shift = 8,                 # 在两边扩充noise, 20 + noise + 20
-            sample_num = 4,             # 采样点
+            sample_num = 128,             # 采样点
             eps = 0.002
         )
         self.PIM_CW = dict(
-            n_iters=10000, 
+            n_iters=10, 
             c=1e-4, 
             kappa=0, 
-            lr=0.01, 
+            lr=0.0001, 
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
             shift = 8,                 # 在两边扩充noise, 20 + noise + 20
-            sample_num = 16,             # 采样点
+            sample_num = 128,             # 采样点
             eps = 0.002,
         )
         self.PIM_NAM = dict(
@@ -236,7 +236,7 @@ class Config(object):
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
-            parameter_path = './parameter/vtcnn2_deepfool_0020_v.p',   #
+            parameter_path = './parameter/vtcnn2_pim_nam_0020_s.p',   #
             is_save_parameter = True,
             shift_k = 64,
             is_uap = False,
