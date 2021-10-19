@@ -1,0 +1,1 @@
+python defend.py --config parameters/defend/fgsm_adv_train.yaml --vGPU 0

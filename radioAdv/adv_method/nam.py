@@ -18,38 +18,44 @@ class NAM(BaseMethod):
         self.model ([]): 要攻击的模型
         self.criterion ([]): 损失函数
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], eps=0.03, epoch=5, beta1 = 0.9, beta2 = 0.999, is_target=False, target=0):
         """[summary]
 
         Args:
             model ([type]): [要攻击的模型]
             criterion ([type]): [损失函数]
+            eps (float, optional): [控制BIM精度]. Defaults to 0.03.
+            epoch (int, optional): [BIM的迭代次数]. Defaults to 5.
+            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
+            targets (int, optional): [攻击目标]. Defaults to 0.
         """
         super(NAM,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.eps = eps
+        self.epoch = epoch
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, x_snr=[], eps=0.03, epoch=5, is_target=False, target=0, beta1 = 0.9, beta2 = 0.999):
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
             x ([array[float] or tensor]): [输入样本，四维]
             y (array[long], optional): [样本标签]. Defaults to 0.
-            eps (float, optional): [控制BIM精度]. Defaults to 0.03.
-            epoch (int, optional): [BIM的迭代次数]. Defaults to 5.
-            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
-            targets (int, optional): [攻击目标]. Defaults to 0.
-
+            
         Returns:
             x_adv [array]: [对抗样本]
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, epoch)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target, self.epoch)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, epoch, eps, beta1, beta2)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.epoch, self.eps, self.beta1, self.beta2)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()

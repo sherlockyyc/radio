@@ -14,35 +14,18 @@ class Config(object):
 
 
         self.CONFIG = dict(
-            dataset_name = 'Rml2016_10a',     #所选择的数据集的名称
-            model_name = 'VTCNN2',       #攻击模型的名称
+            dataset_name = 'Rml2016_10a',       #所选择的数据集的名称
+            model_name = 'VTCNN2',              #白盒攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'PIM_NAM',       #设定攻击方法的名称
+            attack_name = 'NAM',       #设定攻击方法的名称
+            defender_name =  'NormalTrainer',
         )
 
 
 
         #################################################模型选择
         ##########################模型参数
-        # self.VTCNN2 = dict(
-        #    filepath = '/home/baiding/Study/research/radio/model/VTCNN2/VTCNN2_Epoch85.pkl'
-        # )
-        # self.Based_GRU = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/Based_GRU/Based_GRU_Epoch1260.pkl'
-        # )
-        # self.Based_LSTM = dict(
-        #     filepath = ''
-        # )
-        # self.Based_VGG = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/Based_VGG/Based_VGG_Epoch1160.pkl'
-        # )
-        # self.Based_ResNet = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
-        # )
-        # self.CLDNN = dict(
-        #     filepath = '/home/baiding/Study/research/radio/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
-        # )
         self.VTCNN2 = dict(
             filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
         )
@@ -95,14 +78,14 @@ class Config(object):
         #################################################攻击方法
         ##########################FGSM方法
         self.FGSM = dict(
-            eps = 30*1e-4,                  #FGSM的控制大小的参数
+            eps = 20*1e-4,                  #FGSM的控制大小的参数
             is_target = False,           #控制攻击方式，目标攻击、无目标攻击
             target = 3,               #目标攻击的目标
         )
         ##########################BIM方法
         self.BIM = dict(
-            eps = 1e-5,                  #BIM的控制大小的参数
-            epoch = 10,                 #BIM的迭代次数
+            eps = 1e-4,                  #BIM的控制大小的参数
+            epoch = 20,                 #BIM的迭代次数
             is_target = False,           #控制攻击方式，目标攻击、无目标攻击
             target = 3,               #目标攻击的目标
         )
@@ -114,7 +97,7 @@ class Config(object):
         ## PGD
         self.PGD = dict(
             eps = 1e-4,                 # 控制大小的参数
-            epoch = 10,                  # 迭代次数
+            epoch = 20,                  # 迭代次数
             is_target = False,           # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                  # 目标攻击的目标
         )
@@ -129,7 +112,7 @@ class Config(object):
         ## NI-FGSM
         self.NI_FGSM = dict(
             eps = 1e-4,                # 控制大小的参数
-            epoch = 25,                 # 迭代次数
+            epoch = 20,                 # 迭代次数
             is_target = False,          # 控制攻击方式，目标攻击、无目标攻击
             target = 3,                 # 目标攻击的目标
             mu = 1,                     # momentum参数
@@ -226,7 +209,7 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'Shifting_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
+            method = 'White_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
@@ -236,7 +219,7 @@ class Config(object):
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
-            parameter_path = './parameter/vtcnn2_pim_nam_0020_s.p',   #
+            parameter_path = './tmp_parameter/vtcnn2_pim_nam_0020_s.p',   #
             is_save_parameter = True,
             shift_k = 64,
             is_uap = False,
@@ -260,6 +243,38 @@ class Config(object):
             log.update(self.Black_Attack)
             log.update(self.Shifting_Attack)
         return log
+
+    def load_parameter(self, parameter):
+        """[加载parameter内的参数]
+
+        Args:
+            parameter ([dict]): [由yaml文件导出的字典，包含有各个属性]
+        """
+        for key, value in parameter.items():
+            if hasattr(self, key):
+                if type(value) is dict:
+                    orig_config = getattr(self, key)
+                    if orig_config.keys() == value.keys():
+                        setattr(self, key, value)
+                    else:
+                        redundant_key = value.keys() - orig_config.keys()
+                        if redundant_key:
+                            msg = "there are many redundant keys in config file, e.g.:  " + str(redundant_key)
+                            assert None, msg
+                        
+                        lack_key = orig_config.keys() - value.keys()
+                        if lack_key:
+                            msg = "there are many lack keys in config file, e.g.:  " + str(lack_key)
+                            assert None, msg
+                else:
+                    setattr(self, key, value)
+            else:
+                setattr(self, key, value)
+        
+        # 更新受影响的参数(不太重要的参数)
+        self.Checkpoint['log_filename'] =  '{}_{}_V{}_{}.log'.format(self.CONFIG['model_name'], self.CONFIG['attack_name'], self.VERSION, time.strftime("%m-%d_%H-%M"))              #log文件名称
+
+        return None
         
     
 

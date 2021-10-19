@@ -18,7 +18,7 @@ class PGD(BaseMethod):
         self.model ([]): 要攻击的模型
         self.criterion ([]): 损失函数
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], eps=0.03, epoch=5, is_target=False, target=0):
         """[summary]
 
         Args:
@@ -26,8 +26,13 @@ class PGD(BaseMethod):
             criterion ([type]): [损失函数]
         """
         super(PGD,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.eps = eps
+        self.epoch = epoch
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, x_snr=[], eps=0.03, epoch=5, is_target=False, target=0):
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
@@ -44,12 +49,12 @@ class PGD(BaseMethod):
             pred [array]: [攻击后的标签]
         """
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, epoch, eps)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target, self.epoch, self.eps)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, epoch, eps)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.epoch, self.eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()

@@ -12,7 +12,7 @@ class FGSM(BaseMethod):
         self.use_gpu ([bool]): 是否使用GPU
         self.device_id ([list]): 使用的GPU的id号
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], eps=0.03, is_target=False, target=0):
         """[summary]
 
        Args:
@@ -22,8 +22,13 @@ class FGSM(BaseMethod):
             device_id ([list]): 使用的GPU的id号
         """
         super(FGSM,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.eps = eps
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, x_snr=[], eps=0.03, is_target=False, target=0):
+
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
@@ -41,12 +46,12 @@ class FGSM(BaseMethod):
         
         
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, eps)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target, self.eps)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, eps)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()

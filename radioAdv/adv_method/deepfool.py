@@ -12,7 +12,7 @@ class DeepFool(BaseMethod):
         self.use_gpu ([bool]): 是否使用GPU
         self.device_id ([list]): 使用的GPU的id号
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], max_iter=10, eps=0.2, is_target=False, target=0):
         """[summary]
 
        Args:
@@ -20,18 +20,24 @@ class DeepFool(BaseMethod):
             criterion ([type]): [损失函数]
             use_gpu ([bool]): 是否使用GPU
             device_id ([list]): 使用的GPU的id号
+            max_iter (int, optional): [DeepFool的最大迭代次数]. Defaults to 10.
+            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
+            targets (int, optional): [攻击目标]. Defaults to 0.
         """
         super(DeepFool,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.max_iter = max_iter
+        self.eps = eps
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, x_snr=[], max_iter=10, is_target=False, target=0, eps=0.2):
+
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
             x ([array[float] or tensor]): [输入样本，四维]
             y (array[long], optional): [样本标签]. Defaults to 0.
-            max_iter (int, optional): [DeepFool的最大迭代次数]. Defaults to 10.
-            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
-            targets (int, optional): [攻击目标]. Defaults to 0.
             
         Returns:
             x_adv [array]: [对抗样本]
@@ -39,12 +45,12 @@ class DeepFool(BaseMethod):
             pred [array]: [攻击后的标签]
         """
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, max_iter, eps)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.max_iter, self.eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
 

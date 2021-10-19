@@ -1,0 +1,1 @@
+python defend.py --config parameters/defend/normal_train.yaml --vGPU 0

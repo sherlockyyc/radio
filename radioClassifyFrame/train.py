@@ -13,8 +13,12 @@ if __name__ == '__main__':
     setup_seed(2000)
 
     config = Config()
-    dataset = getattr(module_loader, config.CONFIG['dataset_name']+'TrainSet')(**getattr(config, config.CONFIG['dataset_name']))    
-    data_loader = DataLoader(dataset, batch_size = config.ARG['batch_size'], shuffle=True, num_workers=4)
+    train_dataset = getattr(module_loader, config.CONFIG['dataset_name']+'TrainSet')(**getattr(config, config.CONFIG['dataset_name']))    
+    train_loader = DataLoader(train_dataset, batch_size = config.ARG['batch_size'], shuffle=True, num_workers=4)
+    test_dataset = getattr(module_loader, config.CONFIG['dataset_name']+'TestSet')(**getattr(config, config.CONFIG['dataset_name']))  
+    snrs, mods = test_dataset.get_snr_and_mod()  
+    test_loader = DataLoader(test_dataset, batch_size = config.ARG['batch_size'], shuffle=False, num_workers=1)
+    
     metrics = [getattr(module_metric, metric) for metric in config.CONFIG['metrics']]
 
     model = getattr(module_model, config.CONFIG['model_name'])(**getattr(config,config.CONFIG['model_name']))
@@ -22,7 +26,7 @@ if __name__ == '__main__':
 
     optimizer = getattr(torch.optim, config.CONFIG['optimizer_name'])(model.parameters(),**getattr(config, config.CONFIG['optimizer_name']))
 
-    trainer = module_trainer.ClassficationTrainer(model, data_loader, criterion, optimizer, metrics, config)
+    trainer = module_trainer.ClassficationTrainer(model, train_loader, test_loader, criterion, optimizer, metrics, config, snrs = snrs, mods = mods)
     print('start train')
     trainer.train()
 

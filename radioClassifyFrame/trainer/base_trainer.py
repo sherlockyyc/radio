@@ -22,9 +22,10 @@ class BaseTrainer(object):
         self.EPOCH ([int]): 训练的最大epoch
         self.len_epoch ([int]): data_loader的batch数目
     """
-    def __init__(self,model,data_loader,criterion,optimizer,metrics,config):
+    def __init__(self,model,train_loader, test_loader,criterion,optimizer,metrics,config):
         self.model = model
-        self.data_loader = data_loader
+        self.train_loader = train_loader
+        self.test_loader = test_loader
         self.criterion = criterion
         self.optimizer = optimizer
         self.metrics = metrics
@@ -69,7 +70,7 @@ class BaseTrainer(object):
         #------------------------------------训练配置
         self.EPOCH = self.config.ARG['epoch']
         self.BASE_EPOCH = self.config.LoadModel['base_epoch']
-        self.len_epoch = len(self.data_loader)
+        self.len_epoch = len(self.train_loader)
 
     
     def _train_epoch(self,epoch):
@@ -91,6 +92,8 @@ class BaseTrainer(object):
 
         self.model.train()
         for epoch in range(self.EPOCH):
+            ## Train
+            self.model.train()
             result = self._train_epoch(epoch)
             # optimizer adjust lr
             if self.config.CONFIG['adjust_lr']:
@@ -102,16 +105,28 @@ class BaseTrainer(object):
                 if key == 'metrics':
                     log.update({mtr.__name__: value[i] for i, mtr in enumerate(self.metrics)})
                 else:
-                    log[key] = value
+                    log['Train '+key] = value
 
-            self.file_write(log_file,log)
+            # self.file_write(log_file,log)
 
-            for key, value in log.items():
-                print('    {:15s}: {}'.format(str(key), value))
-
+            # for key, value in log.items():
+            #     print('    {:15s}: {}'.format(str(key), value))
                 
             if epoch % self.save_period == 0:
                 self._save_checkpoint(epoch)
+            
+
+            ## Test
+            self.model.eval()
+            result = self._test_epoch()
+            for key, value in result.items():
+                if key == 'metrics':
+                    log.update({mtr.__name__: value[i] for i, mtr in enumerate(self.metrics)})
+                else:
+                    log['Test ' + key] = value
+            for key, value in log.items():
+                print('    {:15s}: {}'.format(str(key), value))
+            self.file_write(log_file,log)
 
 
     def test(self):

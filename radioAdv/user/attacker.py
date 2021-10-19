@@ -77,7 +77,7 @@ class Attacker(object):
 
 
 
-    def attack_batch(self, model, x, y, x_snr):
+    def attack_batch(self, model, x, y):
         """[对一组数据进行攻击]]
 
         Args:
@@ -102,8 +102,7 @@ class Attacker(object):
         y = y.to(self.device).long()
 
         self.attack_method.reset_model(model)
-        x_advs, pertubations, logits, nowLabels = self.attack_method.attack(
-            x, y, x_snr, **getattr(self.config, self.config.CONFIG['attack_name']))
+        x_advs, pertubations, logits, nowLabels = self.attack_method.attack(x, y)
 
         return x_advs, pertubations, logits, nowLabels 
 
@@ -122,7 +121,7 @@ class Attacker(object):
         """
         x = np.expand_dims(x, axis=0)                    #拓展成四维
         y = np.array(list([y]))                         #转成矩阵
-        x_adv,pertubation,nowLabel = self.attack_batch(self.model, x, y, None)
+        x_adv,pertubation,nowLabel = self.attack_batch(self.model, x, y)
         return x[0], x_adv[0], pertubation[0] ,nowLabel[0]
 
 
@@ -161,7 +160,7 @@ class Attacker(object):
         snr_num = np.zeros(len(self.snrs))
 
         for idx,(x,y, x_snr) in enumerate(tqdm(data_loader)):
-            x_advs ,pertubations, logits, nowLabels = self.attack_batch(model, x, y, x_snr)
+            x_advs ,pertubations, logits, nowLabels = self.attack_batch(model, x, y)
             y = y.detach().cpu().numpy()
             # 计算平均攻击成功率, 
             if self.is_target:
@@ -237,13 +236,9 @@ class Attacker(object):
         if attack_method == 'White_Attack':
             log = self.white_attack(data_loader)
         elif attack_method == 'Black_Attack':
-            # threat_model = self.config.Black_Attack['threat_model']
-            # black_model = self.config.Black_Attack['black_model']
             log = self.black_attack(data_loader, **getattr(self.config, attack_method))
         elif attack_method == 'Shifting_Attack':
-            threat_model = self.config.Black_Attack['threat_model']
-            black_model = self.config.Black_Attack['black_model']
-            log = self.shifting_attack(data_loader, threat_model, black_model, **getattr(self.config, attack_method))
+            log = self.shifting_attack(data_loader, **getattr(self.config, attack_method))
 
 
         return log
@@ -268,6 +263,7 @@ class Attacker(object):
             mean [float]: 平均扰动大小
         """
         log = {}
+        # 加载白盒模型，利用白盒模型产生对抗样本
         model_name = threat_model
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
         white_log, real_sample, adv_sample, adv_pertub, predicts, targets, logits, x_snrs = self.attack_set(white_model, data_loader)
@@ -284,6 +280,7 @@ class Attacker(object):
 
         torch.cuda.empty_cache()
 
+        # 将白盒模型生成的对抗样本送入到黑盒模型中
         model_name = black_model
         black_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
 
@@ -310,7 +307,7 @@ class Attacker(object):
 
         return log
 
-    def shifting_attack(self, data_loader, threat_model, black_model, load_parameter, parameter_path, is_save_parameter, shift_k, is_uap, eps, is_sim, save_k):
+    def shifting_attack(self, data_loader, load_parameter, parameter_path, is_save_parameter, shift_k, is_uap, eps, is_sim, save_k):
         """[对一个模型进行噪声偏移的攻击]
 
         Args:

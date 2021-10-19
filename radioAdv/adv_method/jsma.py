@@ -12,7 +12,7 @@ class JSMA(BaseMethod):
         self.use_gpu ([bool]): 是否使用GPU
         self.device_id ([list]): 使用的GPU的id号
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], eps=0.03, is_target=False, target=0):
         """[summary]
 
        Args:
@@ -20,30 +20,35 @@ class JSMA(BaseMethod):
             criterion ([type]): [损失函数]
             use_gpu ([bool]): 是否使用GPU
             device_ids ([list]): 使用的GPU的id号
+
+            eps (float, optional): [控制FGSM精度]. Defaults to 0.03.
+            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
+            targets (int, optional): [攻击目标]. Defaults to 0.
         """
         super(JSMA,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.eps = eps
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, eps=0.03, is_target=False, target=0):
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
             x ([array[float] or tensor]): [输入样本，四维]
             y (array[long], optional): [样本标签]. Defaults to 0.
-            eps (float, optional): [控制FGSM精度]. Defaults to 0.03.
-            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
-            targets (int, optional): [攻击目标]. Defaults to 0.
             
         Returns:
             x_adv [array]: [对抗样本]
             pertubation [array]: [对抗扰动]
             pred [array]: [攻击后的标签]
         """
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, eps)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target, self.eps)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, eps)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
 

@@ -12,7 +12,7 @@ class CW(BaseMethod):
         self.use_gpu ([bool]): 是否使用GPU
         self.device_id ([list]): 使用的GPU的id号
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], binary_search_steps=9, n_iters=10000, c=1e-4, kappa=0, lr=0.01, eps=0.002, is_target=False, target=0):
         """[summary]
 
        Args:
@@ -22,8 +22,17 @@ class CW(BaseMethod):
             device_id ([list]): 使用的GPU的id号
         """
         super(CW,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.binary_search_steps = binary_search_steps
+        self.n_iters = n_iters
+        self.c = c
+        self.kappa = kappa
+        self.lr = lr
+        self.eps = eps
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, x_snr=[], binary_search_steps=9, n_iters=10000, c=1e-4, kappa=0, lr=0.01, is_target=False, target=0, eps=0.002):
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
@@ -41,12 +50,12 @@ class CW(BaseMethod):
         
         
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, binary_search_steps, n_iters, c, kappa, lr)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target, self.binary_search_steps, self.n_iters, self.c, self.kappa, self.lr)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, binary_search_steps, n_iters, c, kappa, lr, eps)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.binary_search_steps, self.n_iters, self.c, self.kappa, self.lr, self.eps)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()

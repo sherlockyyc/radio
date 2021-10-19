@@ -13,9 +13,9 @@ import datetime
 class ClassficationTrainer(BaseTrainer):
     """[LeNet+Mnist]
     """
-    def __init__(self,model,data_loader,criterion,optimizer,metrics,config, snrs = [], mods = []):
+    def __init__(self,model,train_loader, test_loader,criterion,optimizer,metrics,config, snrs = [], mods = []):
         
-        super(ClassficationTrainer,self).__init__(model,data_loader,criterion,optimizer,metrics,config)
+        super(ClassficationTrainer,self).__init__(model,train_loader, test_loader,criterion,optimizer,metrics,config)
         self.snrs = snrs
         self.mods = mods
 
@@ -24,10 +24,10 @@ class ClassficationTrainer(BaseTrainer):
         total_loss = 0
         total_metrics = np.zeros(len(self.metrics))
 
-        trainloader_t = tqdm(self.data_loader,ncols=100)
+        trainloader_t = tqdm(self.train_loader,ncols=100)
         
         trainloader_t.set_description("Train Epoch: {}|{}  Batch size: {}  LR : {:.4}".format
-                                      (epoch,self.EPOCH,self.data_loader.batch_size,self.optimizer.param_groups[0]['lr']))
+                                      (epoch,self.EPOCH,self.train_loader.batch_size,self.optimizer.param_groups[0]['lr']))
         
         for idx,(x, y, x_snr) in enumerate(trainloader_t):
             if self.use_gpu:
@@ -58,8 +58,8 @@ class ClassficationTrainer(BaseTrainer):
     def _test_epoch(self):
         total_metrics = np.zeros(len(self.metrics))
 
-        test_loader_t = tqdm(self.data_loader,ncols=100)
-        test_loader_t.set_description("Batch size: {}".format(self.data_loader.batch_size))
+        test_loader_t = tqdm(self.test_loader,ncols=100)
+        test_loader_t.set_description("Batch size: {}".format(self.test_loader.batch_size))
 
         predict = []
         targets = []

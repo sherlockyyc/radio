@@ -18,7 +18,7 @@ class PIM_NAM(BaseMethod):
         self.model ([]): 要攻击的模型
         self.criterion ([]): 损失函数
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], eps=0.03, epoch=5, beta1 = 0.9, beta2 = 0.999, shift = 20, sample_num = 10, is_target=False, target=0):
         """[summary]
 
         Args:
@@ -26,17 +26,22 @@ class PIM_NAM(BaseMethod):
             criterion ([type]): [损失函数]
         """
         super(PIM_NAM,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.eps = eps
+        self.epoch = epoch
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.is_target = is_target
+        self.target = target
+        self.shift = shift
+        self.sample_num = sample_num
 
-    def attack(self, x, y=0, x_snr=[], eps=0.03, epoch=5, is_target=False, target=0, beta1 = 0.9, beta2 = 0.999, shift = 20, sample_num = 10):
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
             x ([array[float] or tensor]): [输入样本，四维]
             y (array[long], optional): [样本标签]. Defaults to 0.
-            eps (float, optional): [控制BIM精度]. Defaults to 0.03.
-            epoch (int, optional): [BIM的迭代次数]. Defaults to 5.
-            is_target (bool, optional): [是否为目标攻击]. Defaults to False.
-            targets (int, optional): [攻击目标]. Defaults to 0.
 
         Returns:
             x_adv [array]: [对抗样本]

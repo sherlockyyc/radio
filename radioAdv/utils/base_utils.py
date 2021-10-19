@@ -32,8 +32,7 @@ def log_write(file, log):
     string += '\n\n\n'
     file.write(string)
 
-
-def adjust_learning_rate(optimizer, epoch, lr_step, lr_decay, increase_bottom=0, increase_amp=1.1):
+def adjust_learning_rate(optimizer, epoch, lr_step, lr_decay, increase_bottom=0, increase_amp=1.1, warm_lr = 0):
     """[自定义自适应学习率变化，退火，学习率先上升后下降]
 
     Args:
@@ -50,6 +49,11 @@ def adjust_learning_rate(optimizer, epoch, lr_step, lr_decay, increase_bottom=0,
     LR = nowLR
     if epoch < increase_bottom:
         LR = LR * increase_amp
+    elif LR < 1e-8:
+        if warm_lr == 0:
+            return optimizer
+        else:
+            LR = warm_lr
     elif(epoch - increase_bottom) % lr_step == 0:
         LR = LR * lr_decay
     

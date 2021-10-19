@@ -10,7 +10,7 @@ class NI_FGSM(BaseMethod):
         self.model ([]): 要攻击的模型
         self.criterion ([]): 损失函数
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], eps=0.03, epoch=5, mu = 1, is_target=False, target=0):
         """[summary]
 
         Args:
@@ -18,8 +18,13 @@ class NI_FGSM(BaseMethod):
             criterion ([type]): [损失函数]
         """
         super(NI_FGSM,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.eps = eps
+        self.epoch = epoch
+        self.mu = mu
+        self.is_target = is_target
+        self.target = target
 
-    def attack(self, x, y=0, x_snr=[], eps=0.03, epoch=5, is_target=False, target=0, mu = 1):
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
@@ -36,12 +41,12 @@ class NI_FGSM(BaseMethod):
             pred [array]: [攻击后的标签]
         """
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target, epoch, eps, mu)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target, self.epoch, self.eps, self.mu)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, epoch, eps, mu)
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.epoch, self.eps, self.mu)
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()

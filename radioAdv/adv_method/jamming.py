@@ -12,7 +12,7 @@ class Jamming(BaseMethod):
         self.use_gpu ([bool]): 是否使用GPU
         self.device_id ([list]): 使用的GPU的id号
     """
-    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0]):
+    def __init__(self, model, criterion = None, use_gpu = False, device_id = [0], mean = 0.2, std = 0.1):
         """[summary]
 
        Args:
@@ -22,8 +22,12 @@ class Jamming(BaseMethod):
             device_id ([list]): 使用的GPU的id号
         """
         super(Jamming,self).__init__(model = model, criterion= criterion, use_gpu= use_gpu, device_id= device_id)
+        self.mean = mean
+        self.std = std
 
-    def attack(self, x, y=0, x_snr=[], mean = 0.2, std = 0.1):
+
+
+    def attack(self, x, y=0):
         """[summary]
 
         Args:
@@ -41,7 +45,7 @@ class Jamming(BaseMethod):
         
         self.model.eval()
 
-        x_adv,pertubation = self._attackWithNoTarget(x, y, mean, std)
+        x_adv,pertubation = self._attackWithNoTarget(x, y, self.mean, self.std)
 
         logits = self.model(x_adv).cpu().detach().numpy()
         pred = logits.argmax(1)
