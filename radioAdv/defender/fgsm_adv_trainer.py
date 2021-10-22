@@ -11,6 +11,7 @@ import datetime
 import numpy as np
 
 import adv_method
+import copy
 
 
 class FGSM_Adv_Trainer(BaseTrainer):
@@ -25,7 +26,8 @@ class FGSM_Adv_Trainer(BaseTrainer):
         self.adv_sigma = adv_sigma
         self.alp_coef = alp_coef
 
-        self.adversary = adv_method.FGSM(self.model, criterion = self.criterion, **self.config.GPU, eps=0.002, is_target=False, target=0)
+        target_model = copy.deepcopy(self.model)
+        self.adversary = adv_method.FGSM(target_model, criterion = self.criterion, **self.config.GPU, eps=0.002, is_target=False, target=0)
         self.lp_loss_fn = torch.nn.MSELoss(reduction='mean')
 
     def _train_epoch(self,epoch):
