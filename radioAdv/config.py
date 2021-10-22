@@ -19,7 +19,6 @@ class Config(object):
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
             attack_name = 'NAM',       #设定攻击方法的名称
-            defender_name =  'NormalTrainer',
         )
 
 
@@ -239,6 +238,8 @@ class Config(object):
             else:
                 log[name] = value
         log['Switch_Method'] = self.Switch_Method['method']
+        if self.Switch_Method['method'] == 'Black_Attack':
+            log.update(self.Black_Attack)
         if self.Switch_Method['method'] == 'Shifting_Attack':
             log.update(self.Black_Attack)
             log.update(self.Shifting_Attack)

@@ -25,7 +25,7 @@ class FGSM_Adv_Trainer(BaseTrainer):
         self.adv_sigma = adv_sigma
         self.alp_coef = alp_coef
 
-        self.adversary = adv_method.FGSM(self.model, criterion = self.criterion, **self.config['GPU'], eps=0.002, is_target=False, target=0)
+        self.adversary = adv_method.FGSM(self.model, criterion = self.criterion, **self.config.GPU, eps=0.002, is_target=False, target=0)
         self.lp_loss_fn = torch.nn.MSELoss(reduction='mean')
 
     def _train_epoch(self,epoch):
@@ -39,20 +39,22 @@ class FGSM_Adv_Trainer(BaseTrainer):
                                       (epoch,self.EPOCH,self.train_loader.batch_size,self.optimizer.param_groups[0]['lr']))
         
         for idx,(x, y, x_snr) in enumerate(trainloader_t):
-            x_adv, _, _, _ = self.adversary.attack(x, y)
-
             if self.use_gpu:
                 x = x.to(self.device)
                 y = y.to(self.device)
-                x_adv = x_adv.to(self.device)
             x = x.float()
             y = y.long()
+
+            x_adv, _, _, _ = self.adversary.attack(x, y)
+            x_adv = torch.tensor(x_adv)
+            if self.use_gpu:
+                x_adv = x_adv.to(self.device)
             x_adv = x_adv.float()
 
             self.optimizer.zero_grad()
 
-            logits = self.model(x)
-            loss = self.criterion(logits,y)
+            logits_normal = self.model(x)
+            loss_normal = self.criterion(logits_normal,y)
 
             logits_adv = self.model(x_adv)
             loss_adv = self.criterion(logits_adv, y)
@@ -64,7 +66,7 @@ class FGSM_Adv_Trainer(BaseTrainer):
             self.optimizer.step()
 
             total_loss += loss.item()
-            total_metrics += self._eval_metrics(logits.cpu().detach().numpy(),y.cpu().detach().numpy())
+            total_metrics += self._eval_metrics(logits_normal.cpu().detach().numpy(),y.cpu().detach().numpy())
         
         log = {
             'loss' : total_loss /self.len_epoch,

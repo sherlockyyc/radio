@@ -6,7 +6,7 @@
 
   CONFIG: {
       dataset_name: 'Rml2016_10a',     # 所选择的数据集的名称
-      model_name: 'VTCNN2',       # 攻击模型的名称
+      model_name: 'Based_LSTM',       # 攻击模型的名称
       criterion_name: 'CrossEntropyLoss',       # 失函数的名称
       optimizer_name: 'Adam',     # 优化器的名称（torch.nn中）
       metrics: ['accuracy'],        # 评价标准的名称（metric文件夹中）
@@ -20,12 +20,12 @@
       batch_size: 1024,    # 训练集batch_size
   },
 
-  VTCNN2: {
+  Based_LSTM: {
       output_dim: 11,
   },
 
   Adam: {
-      lr: 0.003,                  # 学习率
+      lr: 0.0002,                  # 学习率
       weight_decay: 1.0e-3,        # 权重衰减
   },
 

@@ -11,7 +11,7 @@ class Defend_Config(object):
         #------------------------------------------------GPU配置
         self.GPU = dict(
             use_gpu = True,             # 是否使用GPU，True表示使用
-            device_id = [2],            # 所使用的GPU设备号，type=list
+            device_id = [0],            # 所使用的GPU设备号，type=list
         )
 
 

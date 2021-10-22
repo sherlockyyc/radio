@@ -1,0 +1,38 @@
+{
+  GPU: {
+    use_gpu: True,             #是否使用GPU，True表示使用
+    device_id: [0],            #所使用的GPU设备号，type=list
+  },
+
+  CONFIG: {
+      dataset_name: 'Rml2016_10a',       #所选择的数据集的名称
+      model_name: 'Based_ResNet',              #白盒攻击模型的名称
+      criterion_name: 'CrossEntropyLoss',       #损失函数的名称
+      metrics: ['accuracy'],        # 评价标准的名称（metric文件夹中）
+      attack_name: 'MI_FGSM',       #设定攻击方法的名称
+  },
+
+  Rml2016_10a: {
+      dirname: "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
+      prop: 0.5,                     # 所占的比例
+  },
+
+  MI_FGSM: {
+      eps: 1.0e-4,                # 控制大小的参数
+      epoch: 20,                 # 迭代次数
+      is_target: False,          # 控制攻击方式，目标攻击、无目标攻击
+      target: 3,                 # 目标攻击的目标
+      mu: 1,                     # momentum参数
+  },
+
+  Switch_Method: {
+      method: 'Black_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
+  },
+
+  Black_Attack: {
+    threat_model: 'Based_ResNet',
+    black_model: 'Based_GRU',
+    is_uap: False,
+    eps: 0.003,
+  }
+}
