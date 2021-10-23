@@ -271,9 +271,11 @@ class Attacker(object):
             log['White_model   '+key] = value
 
         if is_uap:
+            target_index = targets < 8
+            adv_pertub = adv_pertub[target_index]
             univeral_pertub = UAP(adv_pertub, eps)
             univeral_pertub = np.expand_dims(univeral_pertub, axis=0)
-            adv_pertub = np.tile(univeral_pertub, (adv_pertub.shape[0],1,1,1))
+            adv_pertub = np.tile(univeral_pertub, (real_sample.shape[0],1,1,1))
             adv_sample = real_sample + adv_pertub
             pertub_mean = np.mean(np.abs(adv_pertub))
             log['UAP pertub_mean'] = pertub_mean
@@ -295,7 +297,9 @@ class Attacker(object):
             pertubation = np.stack(pertubation)
             adv_sample = real_sample + pertubation
 
-
+        # target_index = targets >= 8
+        # real_sample = real_sample[target_index]
+        # targets = targets[target_index]
         black_dataset = module_data_loader.Rml2016_10aAdvSampleSet(adv_sample, targets, x_snrs)
         adv_loader = DataLoader(black_dataset, batch_size = 32, shuffle = False, num_workers = 4)
 

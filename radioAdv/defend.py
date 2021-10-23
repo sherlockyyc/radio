@@ -5,7 +5,7 @@ import data_loader as module_loader
 import model_loader as module_model
 import user as module_trainer
 import metric as module_metric
-import defend_config
+from defend_config import Defend_Config
 import defender  as module_defender
 from utils import *
 import argparse
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    config = defend_config.Defend_Config()
+    config = Defend_Config()
 
     if args.config:
         assert os.path.exists(args.config), "There's no '" + args.config + "' file."

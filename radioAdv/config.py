@@ -26,13 +26,13 @@ class Config(object):
         #################################################模型选择
         ##########################模型参数
         self.VTCNN2 = dict(
-            filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
+            filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Attack.pkl'
         )
         # self.VTCNN2 = dict(
         #     filepath = '/home/yuzhen/wireless/model/VTCNN2/Adv_Train_VTCNN2_Epoch230.pkl'
         # )
         self.Based_GRU = dict(
-            filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Epoch1260.pkl'
+            filepath = '/home/yuzhen/wireless/model/Based_GRU/Based_GRU_Attack.pkl'
         )
         # self.Based_GRU = dict(
         #     filepath = '/home/yuzhen/wireless/model/Based_GRU/Adv_Train_Based_GRU_Epoch170.pkl'
@@ -41,13 +41,13 @@ class Config(object):
             filepath = ''
         )
         self.Based_VGG = dict(
-            filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Epoch1160.pkl'
+            filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Attack.pkl'
         )
         self.Based_ResNet = dict(
-            filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Epoch1160.pkl'
+            filepath = '/home/yuzhen/wireless/model/Based_ResNet/Based_ResNet_Attack.pkl'
         )
         self.CLDNN = dict(
-            filepath = '/home/yuzhen/wireless/model/CLDNN_GRU3/CLDNN_Epoch1160.pkl'
+            filepath = '/home/yuzhen/wireless/model/CLDNN/CLDNN_Attack.pkl'
         )
 
 
@@ -208,13 +208,13 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'White_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
+            method = 'Black_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
             black_model = 'VTCNN2',
-            is_uap = False,
-            eps = 0.003,
+            is_uap = True,
+            eps = 0.002,
         )
         self.Shifting_Attack = dict(
             load_parameter = False,         # 是否加载预攻击的扰动
