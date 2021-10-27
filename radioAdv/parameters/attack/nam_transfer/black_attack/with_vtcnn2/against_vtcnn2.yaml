@@ -17,9 +17,6 @@
       prop: 0.5,                     # 所占的比例
   },
 
-  VTCNN2: {
-      filepath: '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
-  },
 
   NAM: {
       eps: 1.0e-4,                # 控制大小的参数

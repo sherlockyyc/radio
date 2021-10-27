@@ -17,9 +17,6 @@
       prop: 0.5,                     # 所占的比例
   },
 
-  VTCNN2: {
-      filepath: '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
-  },
 
   FGSM: {
       eps: 2.0e-3,                 # 控制大小的参数

@@ -263,9 +263,17 @@ class Attacker(object):
             mean [float]: 平均扰动大小
         """
         log = {}
+        
+
         # 加载白盒模型，利用白盒模型产生对抗样本
         model_name = threat_model
         white_model = getattr(model_loader, 'load' + model_name)(**getattr(self.config, model_name)).to(self.device)
+
+        no_attack_log = self._model_test(white_model, data_loader)
+        for key, value in no_attack_log.items():
+            log['No Attack   '+key] = value
+
+
         white_log, real_sample, adv_sample, adv_pertub, predicts, targets, logits, x_snrs = self.attack_set(white_model, data_loader)
         for key, value in white_log.items():
             log['White_model   '+key] = value

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from adv_method.base_method import BaseMethod
-
+# torch.backends.cudnn.enabled=False
 class FGSM(BaseMethod):
     """[FGSM]
 
@@ -67,7 +67,6 @@ class FGSM(BaseMethod):
 
 
     def _attackWithNoTarget(self, x, y, eps):
-        
         x_adv = x
         x_adv.requires_grad = True
         logits = self.model(x_adv)
@@ -78,19 +77,19 @@ class FGSM(BaseMethod):
         #     x_adv.grad.data.fill_(0)
         loss.backward()
         # logits.backward(torch.ones_like(logits))
-
+        # print(loss)
+        # print(logits)
         data_grad = x_adv.grad.data
         #得到梯度的符号
         sign_data_grad = data_grad.sign()
-
+        # print(data_grad)
         x_adv = x + eps * sign_data_grad
         # x_adv = torch.clamp(x_adv, 0, 1)
         pertubation = x_adv - x
-
+ 
         pertubation = self.norm_l1(pertubation.detach().cpu().numpy(),  eps)
         pertubation = torch.tensor(pertubation).type_as(x)
         x_adv = x + pertubation
-
         return x_adv, pertubation
 
     def _attackWithTarget(self, x, target, eps):

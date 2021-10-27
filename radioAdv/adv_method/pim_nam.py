@@ -49,12 +49,12 @@ class PIM_NAM(BaseMethod):
             pred [array]: [攻击后的标签]
         """
         self.model.eval()
-        if is_target:
-            x_adv,pertubation = self._attackWithTarget(x, target)
+        if self.is_target:
+            x_adv,pertubation = self._attackWithTarget(x, self.target)
             message = "At present, we haven't implemented the Target attack algorithm "
             assert x_adv is not None,message
         else:
-            x_adv,pertubation = self._attackWithNoTarget(x, y, epoch, eps, beta1, beta2, shift, sample_num )
+            x_adv,pertubation = self._attackWithNoTarget(x, y, self.epoch, self.eps, self.beta1, self.beta2, self.shift, self.sample_num )
             message = "At present, we haven't implemented the No Target attack algorithm "
             assert x_adv is not None,message
         self.model.eval()

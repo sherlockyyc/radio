@@ -21,6 +21,8 @@ import os
 
 import argparse
 import yaml
+import torch
+torch.backends.cudnn.enabled=False
 
 def main():
     ######################################加载配置

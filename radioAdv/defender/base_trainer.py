@@ -30,7 +30,7 @@ class BaseTrainer(object):
         self.optimizer = optimizer
         self.metrics = metrics
         self.config = config
-        self.model.initialize_weight()
+        # self.model.initialize_weight()
 
         #------------------------------------load checkpoint
         if self.config.CONFIG['load_model']:

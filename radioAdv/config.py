@@ -9,7 +9,7 @@ class Config(object):
         ##################################################GPU配置
         self.GPU = dict(
             use_gpu = True,             #是否使用GPU，True表示使用
-            device_id = [1],            #所使用的GPU设备号，type=list
+            device_id = [0],            #所使用的GPU设备号，type=list
         )
 
 
@@ -18,7 +18,7 @@ class Config(object):
             model_name = 'VTCNN2',              #白盒攻击模型的名称
             criterion_name = 'CrossEntropyLoss',       #损失函数的名称
             metrics = ['accuracy'],        # 评价标准的名称（metric文件夹中）
-            attack_name = 'NAM',       #设定攻击方法的名称
+            attack_name = 'FGSM',       #设定攻击方法的名称
         )
 
 
@@ -26,7 +26,8 @@ class Config(object):
         #################################################模型选择
         ##########################模型参数
         self.VTCNN2 = dict(
-            filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Attack.pkl'
+            # filepath = '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Attack.pkl'
+            filepath = './checkpoint/Rml2016_10a_VTCNN2_V1/VTCNN2_Epoch130.pkl'
         )
         # self.VTCNN2 = dict(
         #     filepath = '/home/yuzhen/wireless/model/VTCNN2/Adv_Train_VTCNN2_Epoch230.pkl'
@@ -38,7 +39,7 @@ class Config(object):
         #     filepath = '/home/yuzhen/wireless/model/Based_GRU/Adv_Train_Based_GRU_Epoch170.pkl'
         # )
         self.Based_LSTM = dict(
-            filepath = ''
+            filepath = '/home/yuzhen/wireless/model/Based_LSTM/Based_LSTM_Attack.pkl'
         )
         self.Based_VGG = dict(
             filepath = '/home/yuzhen/wireless/model/Based_VGG/Based_VGG_Attack.pkl'
@@ -77,7 +78,7 @@ class Config(object):
         #################################################攻击方法
         ##########################FGSM方法
         self.FGSM = dict(
-            eps = 20*1e-4,                  #FGSM的控制大小的参数
+            eps = 10*1e-4,                  #FGSM的控制大小的参数
             is_target = False,           #控制攻击方式，目标攻击、无目标攻击
             target = 3,               #目标攻击的目标
         )
@@ -208,12 +209,12 @@ class Config(object):
         )
         ## 针对attacker的特定函数
         self.Switch_Method = dict(
-            method = 'Black_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
+            method = 'White_Attack',        # 可选['Black_Attack', 'White_Attack', 'Shifting_Attack']
         )
         self.Black_Attack = dict(
             threat_model = 'VTCNN2',
-            black_model = 'VTCNN2',
-            is_uap = True,
+            black_model = 'Based_GRU',
+            is_uap = False,
             eps = 0.002,
         )
         self.Shifting_Attack = dict(

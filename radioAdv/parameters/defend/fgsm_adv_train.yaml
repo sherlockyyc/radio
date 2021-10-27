@@ -25,7 +25,7 @@
   },
 
   Adam: {
-      lr: 0.001,                  # 学习率
+      lr: 0.00002,                  # 学习率
       weight_decay: 1.0e-3,        # 权重衰减
   },
 
@@ -39,13 +39,9 @@
       lr_decay: 0.5,                 # 学习率变化的幅度
       increase_bottom: 5,            # 退火前学习率增加的上界
       increase_amp: 1.1,             # 学习率增加的幅度
-      warm_lr: 0.0005,               # 当学习率小于1e-8时，恢复学习率为warm_lr
+      warm_lr: 0.0001,               # 当学习率小于1e-8时，恢复学习率为warm_lr
   },
 
-  LoadModel: {
-      filename: '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl',     #加载模型的位置，与上面模型要对应
-      base_epoch: 0,           # 预训练的基础epoch
-  },
 
   FGSM_Adv_Trainer: {
       clean_sigma: 0.5,

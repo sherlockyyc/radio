@@ -9,16 +9,12 @@
       model_name: 'VTCNN2',              #白盒攻击模型的名称
       criterion_name: 'CrossEntropyLoss',       #损失函数的名称
       metrics: ['accuracy'],        # 评价标准的名称（metric文件夹中）
-      attack_name: 'FGSM',       #设定攻击方法的名称
+      attack_name: 'PGD',       #设定攻击方法的名称
   },
 
   Rml2016_10a: {
       dirname: "/home/yuzhen/wireless/RML2016.10a",  # 数据集文件路径
       prop: 0.5,                     # 所占的比例
-  },
-
-  VTCNN2: {
-      filepath: '/home/yuzhen/wireless/model/VTCNN2/VTCNN2_Epoch85.pkl'
   },
 
   PGD: {

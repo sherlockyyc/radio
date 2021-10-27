@@ -3,4 +3,4 @@ python attack.py --config parameters/attack/pim_nam_transfer/black_attack/with_c
 python attack.py --config parameters/attack/pim_nam_transfer/black_attack/with_cldnn/against_based_resnet.yaml --vGPU 0
 python attack.py --config parameters/attack/pim_nam_transfer/black_attack/with_cldnn/against_based_gru.yaml --vGPU 0
 python attack.py --config parameters/attack/pim_nam_transfer/black_attack/with_cldnn/against_based_lstm.yaml --vGPU 0
-python attack.py --config parameters/attack/pim_nam_transfer/black_attack/with_cldnn/against_based_cldnn.yaml --vGPU 0
+python attack.py --config parameters/attack/pim_nam_transfer/black_attack/with_cldnn/against_cldnn.yaml --vGPU 0

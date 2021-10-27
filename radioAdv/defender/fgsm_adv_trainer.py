@@ -26,8 +26,9 @@ class FGSM_Adv_Trainer(BaseTrainer):
         self.adv_sigma = adv_sigma
         self.alp_coef = alp_coef
 
-        target_model = copy.deepcopy(self.model)
-        self.adversary = adv_method.FGSM(target_model, criterion = self.criterion, **self.config.GPU, eps=0.002, is_target=False, target=0)
+        # target_model = copy.deepcopy(self.model)
+        # target_model = self.model
+        self.adversary = adv_method.FGSM(self.model, criterion = self.criterion, **self.config.GPU, eps=0.002, is_target=False, target=0)
         self.lp_loss_fn = torch.nn.MSELoss(reduction='mean')
 
     def _train_epoch(self,epoch):
@@ -47,21 +48,24 @@ class FGSM_Adv_Trainer(BaseTrainer):
             x = x.float()
             y = y.long()
 
-            x_adv, _, _, _ = self.adversary.attack(x, y)
+            # self.optimizer.zero_grad()
+            x_adv, _, _, _ = self.adversary.attack(x.clone().detach(), y)
             x_adv = torch.tensor(x_adv)
             if self.use_gpu:
                 x_adv = x_adv.to(self.device)
             x_adv = x_adv.float()
 
+            self.model.train()
             self.optimizer.zero_grad()
 
             logits_normal = self.model(x)
             loss_normal = self.criterion(logits_normal,y)
 
             logits_adv = self.model(x_adv)
-            loss_adv = self.criterion(logits_adv, y)
+            loss_adv = self.criterion(logits_adv, y[:len(logits_adv)])
             logit_pairing_loss = self.lp_loss_fn(logits_normal, logits_adv)
 
+            # loss = self.clean_sigma * loss_normal + self.adv_sigma * loss_adv
             loss = self.clean_sigma * loss_normal + self.adv_sigma * loss_adv + self.alp_coef * logit_pairing_loss
 
             loss.backward()
